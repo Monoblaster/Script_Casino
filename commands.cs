@@ -30,7 +30,7 @@ function serverCmdBuyTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 	
 	if($Casino::AtiveHoldemTableClient == %client)
 	{
-		%name = %a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j;
+		%name = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j);
 		%target = findClientByName(%name);
 		if(isObject(%target))
 		{	
@@ -56,7 +56,7 @@ function serverCmdGiveTable(%client,%chips,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 	
 	if($Casino::AtiveHoldemTableClient == %client)
 	{
-		%name = %a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j;
+		%name = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j);
 		%target = findClientByName(%name);
 		if(isObject(%target))
 		{
@@ -71,7 +71,7 @@ function serverCmdRemoveTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 {
 	if($Casino::AtiveHoldemTableClient == %client)
 	{
-		%name = %a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j;
+		%name = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j);
 		%target = findClientByName(%name);
 		if(isObject(%target))
 		{

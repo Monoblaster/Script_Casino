@@ -25,11 +25,6 @@ function HoldemGame::OnRemove(%obj)
 	%obj.table.delete();
 }
 
-function NYgiveClientMoney(%client, %points)
-{
-    
-}
-
 function HoldemGame::add(%obj,%c,%buy)
 {
 	if(%c.casinoGame !$= "" || !isObject(%c))
@@ -497,6 +492,7 @@ package HoldemGame
 		{
 			%c.casinoGame.remove(%c);
 		}
+		parent::onClientLeaveGame(%c);
 	}
 };
 activatePackage("HoldemGame");
