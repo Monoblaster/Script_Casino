@@ -537,8 +537,13 @@ function serverCmdFinishTH(%c,%e)
 	{
 		%e = 1;
 	}
-
+	
 	%table = %c.holdemTable_currTable;
+	%table.setCommunity("");
+	for(%i = 0; %i < %table.count; %i++)
+	{
+		%table.playerHand("",%i,"1 1");
+	}
 	%game = HoldemGame_Create(%table,%e);
 	%c.chatMessage("Finished making table with id" SPC %game);
 	%c.holdemTable_clickCallback = "";
@@ -562,6 +567,7 @@ function HoldemTable_PlaceCommunityCards(%c,%p)
 		%table.communityCards[2] = MatrixMulPoint(%transform,"0 0 0") SPC %rot;
 		%table.communityCards[3] = MatrixMulPoint(%transform,"0.4 0 0") SPC %rot;
 		%table.communityCards[4] = MatrixMulPoint(%transform,"0.8 0 0") SPC %rot;
+		%table.setCommunity("1 1 1 1 1");
 		%c.chatMessage("Place the player's hands next");
 		%c.holdemTable_clickCallback = "HoldemTable_PlaceHand";
 	}
@@ -585,6 +591,7 @@ function HoldemTable_PlaceHand(%c,%p)
 		%table.playerStack[%count] = MatrixMulPoint(%transform,"0.6 0 0") SPC %rot;
 		%table.playerStake[%count] = MatrixMulPoint(%transform,"0 0.6 0") SPC %rot;
 		%table.playerMarker[%count] = MatrixMulPoint(%transform,"-0.4 0.4 0") SPC %rot;
+		%table.playerHand("",%count,"1 1");
 		%table.handCount++;
 	}
 }
