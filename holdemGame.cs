@@ -58,16 +58,16 @@ function HoldemGame::remove(%obj,%c)
 	%p = %c.player;
 	%seat = %obj.clientSeat[%c];
 	
-	if(%obj.game.curr() == %seat)
+	if(%obj.currInput == %seat)
 	{
 		%obj.fold();
 	}
 	
+	%c.chatMessage("\c5You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
+	NYgiveClientMoney(%c, mCeil(%obj.game.playerStack(%seat) / %obj.exchange));
 	%obj.game.setPlayer(%seat,false,0);
 	%obj.seatClient[%seat] = "";
 	%obj.listClient.remove(%c);
-	%c.chatMessage("\c5You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
-	NYgiveClientMoney(%c, mCeil(%obj.game.playerStack(%seat) / %obj.exchange));
 
 	%obj.table.playerStack(%seat);
 	%obj.table.playerStake(%seat);
