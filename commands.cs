@@ -35,14 +35,20 @@ function serverCmdBuyTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 		if(isObject(%target))
 		{	
 			%buyIn = $Casino::AtiveHoldemTableBuyIn;
-			%client.NYmoney -= %buyIn;
-			%client.setScore(%client.NYmoney);
+			if(%buyIn > %target.NYmoney)
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "doesn't have enough money.");
+				return;
+			}
 
-			messageclient(%client, '', "\c3You paid \c6" @ %buyIn @ " points;\c3 you now have \c6" @ %client.NYmoney @ "\c3 points and \c6" @ $Casino::AtiveHoldemTable.exchange * %buyIn @ "\c3 chips.");
+			%target.NYmoney -= %buyIn;
+			%target.setScore(%target.NYmoney);
+
+			messageclient(%target, '', "\c3You paid \c6" @ %buyIn @ " points;\c3 you now have \c6" @ %target.NYmoney @ "\c3 points and \c6" @ $Casino::AtiveHoldemTable.exchange * %buyIn @ "\c3 chips.");
 
 			NYlogs_write("config/server/LogNewYear/money.txt",
-				NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %client.getBLID() TAB %client.name TAB
-				"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %client.NYmoney
+				NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %target.getBLID() TAB %target.name TAB
+				"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %target.NYmoney
 			);
 
 			%client.chatMessage(%target.getPlayerName() SPC "has been added.");
