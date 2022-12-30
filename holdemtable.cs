@@ -540,7 +540,7 @@ function serverCmdFinishTH(%c,%e)
 	
 	%table = %c.holdemTable_currTable;
 	%table.setCommunity("");
-	for(%i = 0; %i < %table.count; %i++)
+	for(%i = 0; %i < %table.handCount; %i++)
 	{
 		%table.playerHand("",%i,"1 1");
 	}
