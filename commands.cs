@@ -1,13 +1,13 @@
-function serverCmdSetTable(%c,%id,%buyIn,%private)
+function serverCmdSetTable(%c,%id,%buyIn)
 {
 	if(isObject(%id) && %c.isAdmin)
 	{
 		%buyIn += 0;
 		$Casino::AtiveHoldemTable = %id;
-		$Casino::AtiveHoldemTablePrivate = %private;
+		$Casino::AtiveHoldemTablePrivate = %buyIn == 0;
 		$Casino::AtiveHoldemTableClient = %c;
 		$Casino::AtiveHoldemTableBuyIn = %buyIn;
-		if(!%private)
+		if(!$Casino::AtiveHoldemTablePrivate)
 		{
 			chatMessageAll("","\c5Texas Hold'em is open with a buy-in of " @ %buyIn @ "! Use /joinTable to request to join.");
 		}
@@ -28,7 +28,7 @@ function serverCmdJoinTable(%c)
 function serverCmdBuyTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 {
 	
-	if($Casino::AtiveHoldemTableClient == %client)
+	if($Casino::AtiveHoldemTableClient == %client && !$Casino::AtiveHoldemTablePrivate)
 	{
 		%name = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j);
 		%target = findClientByName(%name);
@@ -107,6 +107,12 @@ function serverCmdRemoveTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 
 function serverCmdStartTable(%client,%blind)
 {
+	if(%blind $= "")
+	{
+		%client.chatMessage("Please give a blind.");
+		return;
+	}
+
 	if($Casino::AtiveHoldemTableClient == %client && $Casino::AtiveHoldemTable.currInput $= "")
 	{
 		

@@ -17,7 +17,7 @@ function HoldemGame::OnRemove(%obj)
 	for(%i = 0; %i < %count; %i++)
 	{
 		%c = %group.getObject(%i);
-		%c.casinoGame = "";
+		%obj.remove(%c);
 	}
 
 	%obj.listClient.delete();
@@ -39,7 +39,7 @@ function HoldemGame::add(%obj,%c,%buy)
 	%obj.clientSeat[%c] = %seat;
 	%obj.seatClient[%seat] = %c;
 	%obj.listClient.add(%c);
-	%c.chatMessage("\c6You have been added to Texas Hold'em. Take your seat at seat \c5#" @ %seat @ "\c6.");
+	%c.chatMessage("\c6You have been added to Texas Hold'em. Take your seat at seat \c5#" @ %seat + 1 @ "\c6.");
 	%obj.table.playerStack(%seat,%chips);
 	%obj.table.playerStake(%seat);
 	%obj.table.playerHand(%p,%seat);

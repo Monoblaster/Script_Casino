@@ -542,7 +542,7 @@ function serverCmdFinishTH(%c,%e)
 	%table.setCommunity("");
 	for(%i = 0; %i < %table.handCount; %i++)
 	{
-		%table.playerHand("",%i,"1 1");
+		%table.playerHand("",%i,"");
 	}
 	%game = HoldemGame_Create(%table,%e);
 	%c.chatMessage("Finished making table with id" SPC %game);
