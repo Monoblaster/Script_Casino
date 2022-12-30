@@ -107,7 +107,7 @@ function HoldemGame::promptInput(%obj)
 	%o = %o SPC "fold";
 	%o = trim(%o);
 	%c.chatMessage("\c5Take your turn, you can" SPC stringList(%o," ",",","or") @".");
-	%c.playSound("BrickChange");
+	%c.playSound("BrickChangeSound");
 }
 
 function HoldemGame::start(%obj,%blind)
