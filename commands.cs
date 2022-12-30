@@ -41,18 +41,24 @@ function serverCmdBuyTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 				return;
 			}
 
-			%target.NYmoney -= %buyIn;
-			%target.setScore(%target.NYmoney);
+			
+			if($Casino::AtiveHoldemTable.add(%target,%buyIn))
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "has been added.");
+				%target.NYmoney -= %buyIn;
+				%target.setScore(%target.NYmoney);
 
-			messageclient(%target, '', "\c3You paid \c6" @ %buyIn @ " points;\c3 you now have \c6" @ %target.NYmoney @ "\c3 points and \c6" @ $Casino::AtiveHoldemTable.exchange * %buyIn @ "\c3 chips.");
+				messageclient(%target, '', "\c3You paid \c6" @ %buyIn @ " points;\c3 you now have \c6" @ %target.NYmoney @ "\c3 points and \c6" @ $Casino::AtiveHoldemTable.exchange * %buyIn @ "\c3 chips.");
 
-			NYlogs_write("config/server/LogNewYear/money.txt",
-				NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %target.getBLID() TAB %target.name TAB
-				"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %target.NYmoney
-			);
-
-			%client.chatMessage(%target.getPlayerName() SPC "has been added.");
-			$Casino::AtiveHoldemTable.add(%target,%buyIn);
+				NYlogs_write("config/server/LogNewYear/money.txt",
+					NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %target.getBLID() TAB %target.name TAB
+					"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %target.NYmoney
+				);
+			}
+			else
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "failed to add.");
+			}
 		}
 	}
 }
@@ -65,10 +71,16 @@ function serverCmdGiveTable(%client,%chips,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 		%name = trim(%a SPC %b SPC %c SPC %d SPC %e SPC %f SPC %h SPC %h SPC %i SPC %j);
 		%target = findClientByName(%name);
 		if(isObject(%target))
-		{
-			%client.chatMessage(%target.getPlayerName() SPC "has been added");
-			%target.chatMessage("\c3You were given \c6" @ %chips @ "\c3 chips for free.");
-			$Casino::AtiveHoldemTable.add(%target,mCeil(%chips / $Casino::AtiveHoldemTable.exchange));
+		{	
+			if($Casino::AtiveHoldemTable.add(%target,mCeil(%chips / $Casino::AtiveHoldemTable.exchange)))
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "has been added");
+				%target.chatMessage("\c3You were given \c6" @ %chips @ "\c3 chips for free.");
+			}
+			else
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "failed to add.");
+			}
 		}
 	}
 }
@@ -81,8 +93,14 @@ function serverCmdRemoveTable(%client,%a,%b,%c,%d,%e,%f,%g,%h,%i,%j)
 		%target = findClientByName(%name);
 		if(isObject(%target))
 		{
-			%client.chatMessage(%target.getPlayerName() SPC "has been removed.");
-			$Casino::AtiveHoldemTable.remove(%target);
+			if($Casino::AtiveHoldemTable.remove(%target))
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "has been removed.");
+			}
+			else
+			{
+				%client.chatMessage(%target.getPlayerName() SPC "failed to remove.");
+			}
 		}
 	}
 }
