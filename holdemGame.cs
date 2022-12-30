@@ -1,3 +1,8 @@
+if(!isObject($HoldemGame::Group))
+{
+	$HoldemGame::Group = new SimSet();
+}
+
 function HoldemGame_Create(%table,%exchange)
 {
 	return new ScriptObject(){class = "HoldemGame";exchange = %exchange;table = %table;blinds = 10;};
@@ -6,6 +11,7 @@ function HoldemGame_Create(%table,%exchange)
 function HoldemGame::OnAdd(%obj)
 {
 	//add a join button for each seat
+	$HoldemGame::Group.add(%obj);
 	%obj.listClient = new SimSet();
 	%obj.game = Holdem_Create();
 }

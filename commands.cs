@@ -126,3 +126,34 @@ function serverCmdStartTable(%client,%blind)
 		}
 	}
 }
+
+function serverCmdClosestTable(%c)
+{
+	%p = %c.player;
+	if(%c.isAdmin && isObject(%p))
+	{
+		%pos = %p.getPosition();
+		%group = $HoldemGame::Group;
+		%count = %group.getCount();
+		if(%count == 0)
+		{
+			return;
+		}
+
+		%closestObj = %group.getObject(0);
+		%closestDist = vectorDist(getWords(%closestObj.table.communityCards[2],0,2),%pos);
+		for(%i = 1; %i < %count; %i++)
+		{
+			%currObj = %group.getObject(%i);
+			%currDist = vectorDist(getWords(%currObj.table.communityCards[2],0,2),%pos);
+			
+			if(%closestDist > %currDist)
+			{
+				%closestObj = %currObj;
+				%closestDist = %currDist;
+			}
+		}
+
+		%c.chatMessage(%closestObj);
+	}
+}
