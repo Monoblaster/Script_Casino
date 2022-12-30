@@ -131,6 +131,7 @@ function HoldemGame::start(%obj,%blind)
 	if(%obj.game.nextHand(%blind))
 	{
 		//message all the game has started and place blinds + deal animation
+		%obj.messageAll("\c5A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
 		%game = %obj.game;
 		%seats = %game.seats;
 		%table = %obj.table;
@@ -164,11 +165,10 @@ function HoldemGame::start(%obj,%blind)
 		}
 		%deal = trim(%deal1) TAB trim(%deal2);
 		%obj.deal(%deal);
+		return true;
 	}
-	else
-	{
-		//message all the game hasn't started
-	}
+	%obj.messageAll("\c5There are not enough players to start a hand.");
+	return false;
 }
 
 function HoldemGame::deal(%obj,%list)

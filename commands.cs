@@ -109,7 +109,14 @@ function serverCmdStartTable(%client,%blind)
 {
 	if($Casino::AtiveHoldemTableClient == %client && $Casino::AtiveHoldemTable.currInput $= "")
 	{
-		%client.chatMessage("Table has been started.");
-		$Casino::AtiveHoldemTable.start(%blind);
+		
+		if($Casino::AtiveHoldemTable.start(%blind))
+		{
+			%client.chatMessage("Table has been started.");
+		}
+		else
+		{
+			%client.chatMessage("Table failed to start.");
+		}
 	}
 }
