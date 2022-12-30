@@ -1,0 +1,9 @@
+exec("./lookuptables.cs");
+exec("./cards.cs");
+exec("./poker.cs");
+exec("./seats.cs");
+exec("./stringutils.cs");
+exec("./holdem.cs");
+exec("./holdemgame.cs");
+exec("./holdemtable.cs");
+exec("./commands.cs");
