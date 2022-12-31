@@ -96,7 +96,7 @@ function Holdem::over(%obj)
 
 function Holdem::passed(%obj)
 {
-	return %obj.noChangeCount == (%obj.seats.count() - %obj.foldedCount - %obj.allInCount);
+	return %obj.noChangeCount >= (%obj.seats.count() - %obj.foldedCount - %obj.allInCount);
 }
 
 function Holdem::reveal(%obj)

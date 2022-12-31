@@ -113,6 +113,7 @@ function HoldemGame::promptInput(%obj)
 	%o = %o SPC "fold";
 	%o = trim(%o);
 	%c.chatMessage("\c5Take your turn, you can" SPC stringList(%o," ",",","or") @".");
+	%obj.messageAll("\c5It is" SPC %c.getPlayerName() @ "'s turn.");
 	%c.playSound("BrickChangeSound");
 }
 
@@ -143,6 +144,11 @@ function HoldemGame::start(%obj,%blind)
 		%table = %obj.table;
 		
 		%obj.updateCommunity();
+
+		for(%i = 0;%i < %table.handCount;%i++)
+		{
+			%table.playerMarker(%i);
+		}
 
 		%table.playerMarker(%game.dealerButton,0.5,"1 1 1 1");
 

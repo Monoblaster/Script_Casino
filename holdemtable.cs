@@ -503,16 +503,15 @@ function HoldemTable::playerStake(%obj,%c,%v)
 
 function HoldemTable::playerMarker(%obj,%c,%s,%color)
 {
-	if(isObject(%obj.playerMakerObj[%c]))
+	if(isObject(%obj.playerMarkerObj[%c]))
 	{
-		%obj.playerMakerObj[%c].delete();
+		%obj.playerMarkerObj[%c].delete();
 	}
 	if(%s > 0)
 	{
-		%obj.playerMakerObj[%c] = CasinoChipShape.set(CasinoChipShape.create(%obj.playerMarker[%c]),%s,%color);
+		%obj.playerMarkerObj[%c] = CasinoChipShape.set(CasinoChipShape.create(%obj.playerMarker[%c]),%s,%color);
 	}
 }
-
 
 function serverCmdStartTH(%c)
 {
