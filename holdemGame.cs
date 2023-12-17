@@ -134,7 +134,15 @@ function HoldemGame::promptInput(%obj)
 	}
 	%o = %o SPC "fold";
 	%o = trim(%o);
-	%c.chatMessage("\c5Take your turn, you can" SPC stringList(%o," ",",","or") @".");
+
+	if(%obj.automated)
+	{
+		%timelimit = "You have 10 seconds.";
+		cancel(%obj.takeTooLongSchedule);
+		%obj.takeTooLongSchedule = %obj.schedule(10000,"Command","Fold");
+	}
+	
+	%c.chatMessage("\c5Take your turn, you can" SPC stringList(%o," ",",","or") @"." SPC %timelimit);
 	%obj.messageAll("\c5It is" SPC %c.getPlayerName() @ "'s turn.");
 	%c.playSound("BrickChangeSound");
 }
