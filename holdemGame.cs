@@ -9,8 +9,7 @@ function HoldemGame_Create(%table,%exchange)
 }
 
 function HoldemGame::OnAdd(%obj)
-{
-	//add a join button for each seat
+{	
 	$HoldemGame::Group.add(%obj);
 	%obj.listClient = new SimSet();
 	%obj.game = Holdem_Create();
@@ -31,7 +30,7 @@ function HoldemGame::OnRemove(%obj)
 	%obj.table.delete();
 }
 
-function HoldemGame::add(%obj,%c,%buy)
+function HoldemGame::add(%obj,%c,%buy,%seat)
 {
 	if(%c.casinoGame !$= "" || !isObject(%c))
 	{
@@ -41,7 +40,15 @@ function HoldemGame::add(%obj,%c,%buy)
 	%p = %c.player;
 	
 	%chips = mFloor(%buy * %obj.exchange);
-	%seat = %obj.game.addPlayer(%chips);
+	if(%seat $= "" || %seat >= %obj.table.handCount)
+	{
+		%seat = %obj.game.addPlayer(%chips);
+	}
+	else
+	{
+		%obj.game.addPlayer(%chips,%seat);
+	}
+	
 	%obj.clientSeat[%c] = %seat;
 	%obj.seatClient[%seat] = %c;
 	%obj.listClient.add(%c);
@@ -49,8 +56,14 @@ function HoldemGame::add(%obj,%c,%buy)
 	%obj.table.playerStack(%seat,%chips);
 	%obj.table.playerStake(%seat);
 	%obj.table.playerHand(%p,%seat);
+	%obj.table.playerButton(%seat);
 
 	%c.casinoGame = %obj; 
+
+	if(%obj.automated && !isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
+	{
+		%obj.start();
+	}
 	return true;
 }
 
@@ -64,9 +77,13 @@ function HoldemGame::remove(%obj,%c)
 	%p = %c.player;
 	%seat = %obj.clientSeat[%c];
 	
-	if(%obj.currInput == %seat)
+	if(%obj.currInput == %c)
 	{
-		%obj.fold();
+		if(%obj.fold())
+		{
+			%obj.next();
+		}
+		
 	}
 	
 	%c.chatMessage("\c5You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
@@ -79,6 +96,11 @@ function HoldemGame::remove(%obj,%c)
 	%obj.table.playerStake(%seat);
 	%obj.table.playerHand(%p,%seat);
 
+	if(%obj.automated)
+	{
+		%obj.table.playerButton(%seat,1,"1 0 0 1");
+	}
+	
 	%c.casinoGame = ""; 
 	
 	return true;
@@ -119,6 +141,16 @@ function HoldemGame::promptInput(%obj)
 
 function HoldemGame::start(%obj,%blind)
 {
+	if(%obj.automated && %obj.game.seats.count() < 2)
+	{
+		return;
+	}
+
+	if(%blind $= "" && %obj.automated !$= "")
+	{
+		%blind = %obj.automatedblind;
+	}
+
 	%game = %Obj.game;
 	%seats = %game.seats;
 	%count = %seats.count();
@@ -332,6 +364,12 @@ function HoldemGame::next(%obj)
 			%table.playerStake(%player,%game.playerStake(%player));
 			%table.playerStack(%player,%game.playerStack(%player));
 			%player = %seats.next(%player + 1);
+		}
+
+		if(%obj.automated && %obj.game.seats.count() >= 2)
+		{
+			%obj.messageAll("\c5The game will restart in 10 seconds...");
+			%obj.startSchedule = %obj.schedule(10000,"start");
 		}
 	}
 	else

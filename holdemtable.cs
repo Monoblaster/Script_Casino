@@ -414,6 +414,11 @@ function HoldemTable::onRemove(%obj)
 		{
 			%curr.delete();
 		}
+		%curr = %obj.playerButton[%i];
+		if(isObject(%curr))
+		{
+			%curr.delete();
+		}
 	}
 }
 
@@ -513,6 +518,18 @@ function HoldemTable::playerMarker(%obj,%c,%s,%color)
 	}
 }
 
+function HoldemTable::playerButton(%obj,%c,%s,%color)
+{
+	if(isObject(%obj.playerButtonObj[%c]))
+	{
+		%obj.playerButtonObj[%c].delete();
+	}
+	if(%s > 0)
+	{
+		%obj.playerButtonObj[%c] = CasinoChipShape.set(CasinoChipShape.create(%obj.playerButton[%c]),%s,%color);
+	}
+}
+
 function serverCmdStartTH(%c)
 {
 	if(!%c.isAdmin || %c.holdemTable_currTable !$= "")
@@ -590,6 +607,7 @@ function HoldemTable_PlaceHand(%c,%p)
 		%table.playerStack[%count] = MatrixMulPoint(%transform,"0.6 0 0") SPC %rot;
 		%table.playerStake[%count] = MatrixMulPoint(%transform,"0 0.6 0") SPC %rot;
 		%table.playerMarker[%count] = MatrixMulPoint(%transform,"-0.4 0.4 0") SPC %rot;
+		%table.playerButton[%count] = %pos SPC %rot;
 		%table.playerHand("",%count,"1 1");
 		%table.handCount++;
 	}

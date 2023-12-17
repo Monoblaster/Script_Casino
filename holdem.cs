@@ -30,9 +30,13 @@ function Holdem::setPlayer(%obj,%n,%in,%stack)
 	return %obj;
 }
 
-function Holdem::addPlayer(%obj,%stack)
+function Holdem::addPlayer(%obj,%stack,%seat)
 {
-	%seat = %obj.seats.next(0,true);
+	if(%seat $= "")
+	{
+		%seat = %obj.seats.next(0,true);
+	}
+	
 	%obj.setPlayer(%seat,true,%stack);
 	%obj.playerFolded[%seat] = true;
 	%obj.foldedCount++;
@@ -91,7 +95,8 @@ function Holdem::MinStake(%obj)
 
 function Holdem::over(%obj)
 {
-	return (%obj.seats.count() - %obj.foldedCount <= 1) || %obj.round == 4 || (%obj.seats.count() - %obj.foldedCount - %obj.allInCount <= 1 && %obj.noChangeCount >= 1) || %obj.seats.count() - %obj.foldedCount - %obj.allInCount == 0;
+	return (%obj.seats.count() - %obj.foldedCount <= 1) || %obj.round == 4 || (%obj.seats.count() - %obj.foldedCount - %obj.allInCount <= 1 && %obj.noChangeCount >= 1) 
+	|| %obj.seats.count() - %obj.foldedCount - %obj.allInCount == 0;
 }
 
 function Holdem::passed(%obj)
@@ -241,7 +246,7 @@ function Holdem::canRaise(%obj)
 
 function Holdem::canCall(%obj)
 {
-	return %obj.playerStack[%obj.seats.curr()] > %obj.lastBet && %obj.lastBet != 0 && %obj.playerStake[%obj.seats.curr()] != %obj.lastBet;
+	return %obj.playerStack[%obj.seats.curr()] > %obj.lastBet && %obj.lastBet != 0 && %obj.playerStake[%obj.seats.curr()] != %obj.minStake;
 }
 
 function Holdem::canCheck(%obj)
@@ -363,7 +368,8 @@ function Holdem_Eval(%hand)
 		%suitHistogram = setField(%suitHistogram,%suit,getWord(%words,0) + 1 SPC %suit);
 	}
 	//sort the histogram values from highest to lowest with rank breaking ties
-	%rankHistogram = trim(sortFields(%rankHistogram,"getWord(%v1,0) > getWord(%v2,0) || ((getWord(%v1,1) > getWord(%v2,1) && getWord(%v2,1) != 0) || getWord(%v1,1) == 0 && getWord(%v2,1) != 0) && getWord(%v1,0) == getWord(%v2,0)"));
+	%rankHistogram = trim(sortFields(%rankHistogram,"getWord(%v1,0) > getWord(%v2,0) || ((getWord(%v1,1) > getWord(%v2,1) && getWord(%v2,1) != 0)"
+	@ " || getWord(%v1,1) == 0 && getWord(%v2,1) != 0) && getWord(%v1,0) == getWord(%v2,0)"));
 	%suitHistogram = trim(sortFields(%suitHistogram,"getWord(%v1,0) > getWord(%v2,0)"));
 
 	%count = getFieldCount(%rankHistogram);

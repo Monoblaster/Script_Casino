@@ -88,6 +88,35 @@ function sortStrings(%s,%sep,%comp)
 	return %ss;
 }
 
+function stringList(%s,%listSep,%comma,%type)
+{
+	%wcount = getStringCount(%s,%listSep);
+	if(%wcount <= 1)
+	{
+		return %s;
+	}
+
+	for(%j = 0; %j < %wcount; %j++)
+	{
+		%lists = "";
+		if(%j <= %wCount - 2)
+		{
+			if(%wCount > 2)
+			{
+				%lists = %comma;
+			}
+			
+			if(%j == %wCount - 2)
+			{
+				%lists = %lists SPC %type;
+			}
+		}
+		%w = getString(%s,%listSep,%j);
+		%s = setString(%s,%listSep,%j,%w @ %lists);
+	}
+	return %s;
+}
+
 function sortRecords(%s,%comp)
 {
 	%count = getRecordCount(%s);
@@ -182,33 +211,4 @@ function sortWords(%s,%comp)
 		}
 	}
 	return %ss;
-}
-
-function stringList(%s,%listSep,%comma,%type)
-{
-	%wcount = getStringCount(%s,%listSep);
-	if(%wcount <= 1)
-	{
-		return %s;
-	}
-
-	for(%j = 0; %j < %wcount; %j++)
-	{
-		%lists = "";
-		if(%j <= %wCount - 2)
-		{
-			if(%wCount > 2)
-			{
-				%lists = %comma;
-			}
-			
-			if(%j == %wCount - 2)
-			{
-				%lists = %lists SPC %type;
-			}
-		}
-		%w = getString(%s,%listSep,%j);
-		%s = setString(%s,%listSep,%j,%w @ %lists);
-	}
-	return %s;
 }
