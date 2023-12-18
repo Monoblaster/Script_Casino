@@ -59,12 +59,44 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 	%obj.table.playerButton(%seat);
 
 	%c.casinoGame = %obj; 
-
-	if(%obj.automated && !isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
+	if(%obj.automated)
 	{
-		%obj.start();
+		tableProximitySchedule(%c);
+		if(!isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
+		{
+			%obj.start();
+			cancel(%c.tableProximitySchedule);
+			
+		}
 	}
+	
 	return true;
+}
+
+function tableProximitySchedule(%client)
+{
+	%game = %client.casinoGame;
+	if(!isObject(%game))
+	{
+		return;
+	}
+
+	%player = %client.player;
+	if(!isObject(%player))
+	{
+		%game.remove(%client);
+		return;
+	}
+
+	%playerPos = setWord(%player.getPosition(),2,0);
+	%handPos = setWord(%game.table.playerButton[%game.clientSeat[%client]],2,0);
+
+	if(vectorDist(%playerPos,%handPos) > 3)
+	{
+		%game.remove(%client);
+		return;
+	}
+	%client.tableProximitySchedule = schedule(500,%client,tableProximitySchedule,%client);
 }
 
 function HoldemGame::remove(%obj,%c)
@@ -79,14 +111,11 @@ function HoldemGame::remove(%obj,%c)
 	
 	if(%obj.currInput == %c)
 	{
-		if(%obj.fold())
-		{
-			%obj.next();
-		}
-		
+		%obj.command("Fold (Left the game)");
+		%obj.next();
 	}
 	
-	%c.chatMessage("\c5You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
+	%c.chatMessage("\c6You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
 	NYgiveClientMoney(%c, mCeil(%obj.game.playerStack(%seat) / %obj.exchange));
 	%obj.game.setPlayer(%seat,false,0);
 	%obj.seatClient[%seat] = "";
@@ -137,13 +166,12 @@ function HoldemGame::promptInput(%obj)
 
 	if(%obj.automated)
 	{
-		%timelimit = "You have 10 seconds.";
-		cancel(%obj.takeTooLongSchedule);
-		%obj.takeTooLongSchedule = %obj.schedule(10000,"Command","Fold");
+		%timelimit = "You have \c215 seconds\c5.";
+		%obj.takeTooLongSchedule = %obj.schedule(15000,"Command","Fold (Ran out of time)");
 	}
 	
-	%c.chatMessage("\c5Take your turn, you can" SPC stringList(%o," ",",","or") @"." SPC %timelimit);
-	%obj.messageAll("\c5It is" SPC %c.getPlayerName() @ "'s turn.");
+	%c.chatMessage("\c5Take your turn, you can\c2" SPC stringList(%o," ","\c5,\c2","\c5or\c2") @"\c5." SPC %timelimit);
+	%obj.messageAll("\c6It is\c3" SPC %c.getPlayerName() @ "\c6's turn.",%c);
 	%c.playSound("BrickChangeSound");
 }
 
@@ -178,7 +206,7 @@ function HoldemGame::start(%obj,%blind)
 	if(%obj.game.nextHand(%blind))
 	{
 		//message all the game has started and place blinds + deal animation
-		%obj.messageAll("\c5A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
+		%obj.messageAll("\c6A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
 		%game = %obj.game;
 		%seats = %game.seats;
 		%table = %obj.table;
@@ -260,19 +288,24 @@ function HoldemGame::updateCommunity(%obj)
 	serverPlay3d("cardPlace"@getRandom(1,4)@"Sound",%obj.table.communityCards[2]);
 }
 
-function HoldemGame::messageAll(%obj,%s)
+function HoldemGame::messageAll(%obj,%s,%except)
 {
 	%group = %obj.listClient;
 	%count = %group.getCount();
 	for(%i = 0; %i < %count; %i++)
 	{
 		%curr = %group.getObject(%i);
+		if(%curr == %except)
+		{
+			continue;
+		}
 		%curr.chatMessage(%s);
 	}
 }
 
 function HoldemGame::next(%obj)
 {
+	cancel(%obj.takeTooLongSchedule);
 	%table = %obj.table;
 	%game = %obj.game;
 	%curr = %game.curr();
@@ -361,7 +394,7 @@ function HoldemGame::next(%obj)
 			}
 			
 			
-			%obj.messageAll("\c3" @ %winners SPC "\c6won\c5" SPC %potType SPC "\c6of\c5" SPC %winnings SPC "chips" @ %handstring @ "\c6.");
+			%obj.messageAll("\c3" @ %winners SPC "\c6won\c2" SPC %potType SPC "\c6of\c2" SPC %winnings SPC "chips" @ %handstring @ "\c6.");
 		}
 		serverPlay3d("rewardSound",%obj.table.communityCards[2]);
 
@@ -376,7 +409,7 @@ function HoldemGame::next(%obj)
 
 		if(%obj.automated && %obj.game.seats.count() >= 2)
 		{
-			%obj.messageAll("\c5The game will restart in 10 seconds...");
+			%obj.messageAll("\c6The game will restart in \c210 seconds...");
 			%obj.startSchedule = %obj.schedule(10000,"start");
 		}
 	}
@@ -485,6 +518,7 @@ function HoldemGame::Command(%obj,%s)
 
 		if(%handled)
 		{
+			%obj.CasinoMessage(%obj.currInput,%s);
 			%obj.next();
 			break;
 		}
@@ -522,40 +556,54 @@ function HoldemGame::pickup(%obj,%c,%p)
 	}
 }
 
+function HoldemGame::CasinoMessage(%obj,%sender,%s)
+{
+	%group = ClientGroup;
+	%count = %group.getCount ();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%client = %group.getObject(%i);
+		
+		if(%client.casinoGame != %sender.casinoGame && isOObject(%client.casinoGame))
+		{
+			continue;
+		}
+
+		if(%client.casinoGame == %sender.casinoGame)
+		{
+			chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %client.clanPrefix, %client.getPlayerName (), %client.clanSuffix, %s);
+			continue;
+		}
+
+		%player = %client.player;
+		if(!isobject(%player))
+		{
+			continue;
+		}
+
+		if(vectorDist(%obj.table.communityCards[2], %player.getPosition()) > 7)
+		{
+			continue;
+		}
+
+		chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %client.clanPrefix, %client.getPlayerName (), %client.clanSuffix, %s);
+		continue;
+	}
+}
+
 package HoldemGame
 {
 	function serverCmdMessageSent(%c,%s)
 	{
 		if(%c.casinoGame.currInput == %c)
 		{
-			%c.casino_nextMessageLocal = %c.casinoGame.Command(%s);
+			if(%c.casinoGame.Command(%s))
+			{
+				return;
+			}
+			
 		}
-
-		%r Parent::serverCmdMessageSent(%c,%s);
-		%c.casino_nextMessageLocal = false;
-		return %r;
-	}
-
-	function chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10)
-	{
-		if(!%sender.casino_nextMessageLocal || %client.casinoGame == %sender.casinoGame)
-		{	
-			return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
-		}
-		
-		%player = %client.player;
-		%senderplayer = %sender.player;
-		if(!isobject(%player) || !isObject(%sender))
-		{
-			return "";
-		}
-
-		if(vectorDist(%player.getPosition(),%senderplayer.getPosition()) > 10)
-		{
-			return "";
-		}
-
-		return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c3(Casino) \c7%1\c3%2\c7%3\c6: %4', %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
+		return Parent::serverCmdMessageSent(%c,%s);
 	}
 
 	function Player::ActivateStuff(%p)

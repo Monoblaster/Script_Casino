@@ -95,7 +95,7 @@ function Holdem::MinStake(%obj)
 
 function Holdem::over(%obj)
 {
-	return (%obj.seats.count() - %obj.foldedCount <= 1) || %obj.round == 4 || (%obj.seats.count() - %obj.foldedCount - %obj.allInCount <= 1 && %obj.noChangeCount >= 1) 
+	return (%obj.seats.count() - %obj.foldedCount <= 1) || %obj.round == 4 || (%obj.seats.count() - %obj.foldedCount - %obj.allInCount == 1 && %obj.noChangeCount >= 1) 
 	|| %obj.seats.count() - %obj.foldedCount - %obj.allInCount == 0;
 }
 
@@ -241,7 +241,7 @@ function Holdem::canAllIn(%obj)
 
 function Holdem::canRaise(%obj)
 {
-	return %obj.playerStack[%obj.seats.curr()] > %obj.lastBet && %obj.lastBet != 0 && %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1;
+	return %obj.playerStack[%obj.seats.curr()] > %obj.lastBet && %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1;
 }
 
 function Holdem::canCall(%obj)
@@ -254,9 +254,12 @@ function Holdem::canCheck(%obj)
 	return %obj.playerStake[%obj.seats.curr()] == %obj.minStake;
 }
 
+//removed cause it doesn't make any sense in the context of texas holdem
+//the round is already opened by blinds so betting shouldn't be an option
 function Holdem::canBet(%obj)
 {
-	return %obj.lastBet == 0 && %obj.playerStack[%obj.seats.curr()] > 0 && %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1;
+	return false;
+	// return %obj.lastBet == 0 && %obj.playerStack[%obj.seats.curr()] > 0 && %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1;
 }
 
 function Holdem::fold(%obj)
@@ -283,9 +286,9 @@ function Holdem::allIn(%obj)
 	if(%stack > 0)
 	{
 		%obj.bet(%stack);
+		%obj.noChangeCount = 0;
 	}
 	%obj.newPot = true;
-	%obj.noChangeCount = 0;
 	return %obj;
 }
 

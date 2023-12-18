@@ -189,7 +189,7 @@ package HoldemCommands
 {
 	function Player::ActivateStuff(%p)
 	{
-		%distance = 7;
+		%distance = 3;
 
 		%c = %p.client;
 		if(isObject(%c.casinoGame))
@@ -206,7 +206,7 @@ package HoldemCommands
 		}
 
 		%game = "";
-		%closestDist = %distance;
+		%closestDist = 7;
 		for(%i = 0; %i < %count; %i++)
 		{
 			%currObj = %group.getObject(%i);
@@ -298,7 +298,7 @@ function serverCmdJoinTexasHoldem(%client)
 		%client.NYmoney -= %buyIn;
 		%client.setScore(%client.NYmoney);
 
-		messageclient(%client, '', "\c3You paid \c6" @ %buyIn @ " points;\c3 you now have \c6" @ %target.NYmoney @ "\c3 points and \c6" @ %game.exchange * %buyIn @ "\c3 chips.");
+		messageclient(%client, '', "\c3You paid \c6" @ %buyIn @ "\c3 points; you now have \c6" @ %client.NYmoney @ "\c3 points and \c6" @ %game.exchange * %buyIn @ "\c3 chips.");
 
 		NYlogs_write("config/server/LogNewYear/money.txt",
 			NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %client.getBLID() TAB %client.name TAB
