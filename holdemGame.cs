@@ -61,12 +61,11 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 	%c.casinoGame = %obj; 
 	if(%obj.automated)
 	{
+		cancel(%c.tableProximitySchedule);
 		tableProximitySchedule(%c);
 		if(!isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
 		{
 			%obj.start();
-			cancel(%c.tableProximitySchedule);
-			
 		}
 	}
 	
@@ -112,7 +111,6 @@ function HoldemGame::remove(%obj,%c)
 	if(%obj.currInput == %c)
 	{
 		%obj.command("Fold (Left the game)");
-		%obj.next();
 	}
 	
 	%c.chatMessage("\c6You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
