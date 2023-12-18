@@ -555,7 +555,7 @@ package HoldemGame
 			return "";
 		}
 
-		return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
+		return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c3(Casino) \c7%1\c3%2\c7%3\c6: %4', %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
 	}
 
 	function Player::ActivateStuff(%p)
