@@ -489,6 +489,7 @@ function HoldemGame::Command(%obj,%s)
 			break;
 		}
 	}
+	return %handled;
 }
 
 function HoldemGame::pickup(%obj,%c,%p)
@@ -525,12 +526,36 @@ package HoldemGame
 {
 	function serverCmdMessageSent(%c,%s)
 	{
-		%r = Parent::serverCmdMessageSent(%c,%s);
 		if(%c.casinoGame.currInput == %c)
 		{
-			%c.casinoGame.Command(%s);
+			%c.casino_nextMessageLocal = %c.casinoGame.Command(%s);
 		}
+
+		%r Parent::serverCmdMessageSent(%c,%s);
+		%c.casino_nextMessageLocal = false;
 		return %r;
+	}
+
+	function chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10)
+	{
+		if(!%sender.casino_nextMessageLocal || %client.casinoGame == %sender.casinoGame)
+		{	
+			return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
+		}
+		
+		%player = %client.player;
+		%senderplayer = %sender.player;
+		if(!isobject(%player) || !isObject(%sender))
+		{
+			return "";
+		}
+
+		if(vectorDist(%player.getPosition(),%senderplayer.getPosition()) > 10)
+		{
+			return "";
+		}
+
+		return parent::chatMessageClient(%client, %sender, %voiceTag, %voicePitch, %msgString, %a1, %a2, %a3, %a4, %a5, %a6, %a7, %a8, %a9, %a10);
 	}
 
 	function Player::ActivateStuff(%p)
