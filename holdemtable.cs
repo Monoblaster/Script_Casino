@@ -414,7 +414,7 @@ function HoldemTable::onRemove(%obj)
 		{
 			%curr.delete();
 		}
-		%curr = %obj.playerButton[%i];
+		%curr = %obj.playerButtonObj[%i];
 		if(isObject(%curr))
 		{
 			%curr.delete();
