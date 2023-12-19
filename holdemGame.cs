@@ -68,7 +68,7 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 			%obj.start();
 		}
 	}
-	
+
 	return true;
 }
 
@@ -81,7 +81,7 @@ function tableProximitySchedule(%client)
 	}
 
 	%player = %client.player;
-	if(!isObject(%player))
+	if(!isObject(%player) && %game.currinput !$= "")
 	{
 		%game.remove(%client);
 		return;
@@ -90,7 +90,7 @@ function tableProximitySchedule(%client)
 	%playerPos = setWord(%player.getPosition(),2,0);
 	%handPos = setWord(%game.table.playerButton[%game.clientSeat[%client]],2,0);
 
-	if(vectorDist(%playerPos,%handPos) > 3)
+	if(vectorDist(%playerPos,%handPos) > 3 && %game.currinput !$= "")
 	{
 		%game.remove(%client);
 		return;
@@ -194,7 +194,6 @@ function HoldemGame::start(%obj,%blind)
 		if(%game.playerStack(%player) == 0)
 		{
 			%c = %obj.seatClient[%player];
-			%c.chatMessage("\c5You ran out of chips!");
 			%obj.remove(%c);	
 		}
 		%player = %seats.next(%player + 1);
@@ -217,18 +216,11 @@ function HoldemGame::start(%obj,%blind)
 		}
 
 		%table.playerMarker(%game.dealerButton,0.5,"1 1 1 1");
-
 		%curr = %seats.next(%game.dealerButton + 1);
-
-		%table.playerStake(%curr,%game.playerStake(%curr));
-		%table.playerStack(%curr,%game.playerStack(%curr));
+		%obj.schedule(0,"blind",%curr);
 		%table.playerMarker(%curr,0.5,"0 0 0.9 1");
-
 		%curr = %seats.next(%curr + 1);
-	
-		%table.playerStake(%curr,%game.playerStake(%curr));
-		%table.playerStack(%curr,%game.playerStack(%curr));
-		%table.playerMarker(%curr,0.5,"0.9 0.9 0 1");
+		%table.playerMarker(%curr,0.5,"0.9 0.9 0 1");	
 		
 		%deal1 = "";
 		%deal2 = "";
@@ -242,11 +234,30 @@ function HoldemGame::start(%obj,%blind)
 			%player = %seats.next(%player + 1);
 		}
 		%deal = trim(%deal1) TAB trim(%deal2);
-		%obj.deal(%deal);
+		%obj.schedule(1000,"deal",%deal);
 		return true;
 	}
 	%obj.messageAll("\c5There are not enough players to start a hand.");
 	return false;
+}
+
+function HoldemGame::blind(%obj,%i,%small)
+{
+	%table = %obj.table;
+	%game = %obj.game;
+	%stake = %game.playerStake(%i);
+
+	%obj.CasinoMessage(%obj.seatClient[%i], "Bet" SPC %stake SPC "(Blind)");
+	serverPlay3d(Casino_GetRandomSound("Chip",3),%table.playerStake[%i]);
+
+	%table.playerStake(%i,%stake);
+	%table.playerStack(%i,%game.playerStack(%i));
+
+	if(%small)
+	{
+		return;
+	}
+	%obj.schedule(500,"blind",%game.seats.next(%i + 1),true);
 }
 
 function HoldemGame::deal(%obj,%list)
@@ -263,7 +274,7 @@ function HoldemGame::deal(%obj,%list)
 
 	%p = %obj.seatClient[%seat].player;
 	%obj.table.playerHand(%p,%seat,getWords(%obj.game.cards.get("hand" @ %seat),0,%cards));
-	serverPlay3d("cardPlace"@getRandom(1,4)@"Sound",%obj.table.communityCards[2]);
+	serverPlay3d(Casino_GetRandomSound("cardPlace",4),%obj.table.communityCards[2]);
 	%obj.schedule(250,"deal",%list);
 }
 
@@ -283,7 +294,7 @@ function HoldemGame::updateCommunity(%obj)
 	%community = %game.cards.get("community");
 
 	%table.setCommunity(%community);
-	serverPlay3d("cardPlace"@getRandom(1,4)@"Sound",%obj.table.communityCards[2]);
+	serverPlay3d(Casino_GetRandomSound("cardPlace",4),%obj.table.communityCards[2]);
 }
 
 function HoldemGame::messageAll(%obj,%s,%except)
@@ -361,41 +372,7 @@ function HoldemGame::next(%obj)
 			}
 		}
 
-		%showdown = %obj.game.showdown();
-
-		%count = getFieldCount(%showdown);
-		for(%i = 0; %i < %count; %i++)
-		{
-			%currPot = getField(%showdown,%i);
-			%pot = getWord(%currPot,0);
-			%hand = getWord(%currPot,1);
-			%winnings = getWord(%currPot,2);
-			%temp = getWords(%currPot,3);
-
-			%winnerCount = getWordCount(%temp);
-			for(%j = 0; %j < %winnerCount; %j++)
-			{
-				%winners = %winners TAB %obj.seatClient[getWord(%temp,%j)].getPlayerName();
-			}
-			%winners = stringList(trim(%winners),"\t",",","and");
-
-			%potType = "the main pot";
-			if(%pot > 0)
-			{
-				%potType = "side pot " @ %pot;
-			}
-
-			%handstring = "";
-			if(%game.reveal())
-			{
-				%handstring = " \c6with a\c4" SPC Poker_Type(%hand);
-			}
-			
-			
-			%obj.messageAll("\c3" @ %winners SPC "\c6won\c2" SPC %potType SPC "\c6of\c2" SPC %winnings SPC "chips" @ %handstring @ "\c6.");
-		}
-		serverPlay3d("rewardSound",%obj.table.communityCards[2]);
-
+		%obj.pots(%obj.game.showdown());
 		%count = %seats.count();
 		%player = %seats.next(0);
 		for(%i = 0; %i < %count; %i++)
@@ -404,12 +381,6 @@ function HoldemGame::next(%obj)
 			%table.playerStack(%player,%game.playerStack(%player));
 			%player = %seats.next(%player + 1);
 		}
-
-		if(%obj.automated && %obj.game.seats.count() >= 2)
-		{
-			%obj.messageAll("\c6The game will restart in \c210 seconds...");
-			%obj.startSchedule = %obj.schedule(10000,"start");
-		}
 	}
 	else
 	{
@@ -417,71 +388,65 @@ function HoldemGame::next(%obj)
 	}
 }
 
+function HoldemGame::pots(%obj,%showdown)
+{
+	%table = %obj.table;
+	%game = %obj.game;
+	%seats = %game.seats;
 
-function HoldemGame::Fold(%obj,%vars)
-{
-	%obj.game.fold();
-	%curr = %obj.game.curr();
-	%obj.table.playerHand(%obj.seatClient[%curr],%curr,"");
-	return true;
-}
+	serverPlay3d("rewardSound",%obj.table.communityCards[2]);
+	%currPot = getField(%showdown,0);
+	%showdown = removeField(%showdown,0);
+	%pot = getWord(%currPot,0);
+	%hand = getWord(%currPot,1);
+	%winnings = getWord(%currPot,2);
+	%temp = getWords(%currPot,3);
 
-function HoldemGame::allin(%obj,%vars)
-{
-	%obj.game.allin();
-	return true;
-}
+	%winnerCount = getWordCount(%temp);
+	for(%j = 0; %j < %winnerCount; %j++)
+	{
+		%winners = %winners TAB %obj.seatClient[getWord(%temp,%j)].getPlayerName();
+	}
+	%winners = stringList(trim(%winners),"\t",",","and");
 
-function HoldemGame::check(%obj,%vars)
-{
-	if(!%obj.game.canCheck())
+	%potType = "the main pot";
+	if(%pot > 0)
 	{
-		return false;
+		%potType = "side pot " @ %pot;
 	}
-	%obj.game.check();
-	return true;
-}
-function HoldemGame::call(%obj,%vars)
-{
-	if(!%obj.game.canCall())
+
+	%handstring = "";
+	if(%game.reveal())
 	{
-		return false;
+		%handstring = " \c6with a\c4" SPC Poker_Type(%hand);
 	}
-	%obj.game.call();
-	return true;
-}
-function HoldemGame::raise(%obj,%vars)
-{
-	%a = getWord(%vars,0);
-	%b = getWord(%vars,1);
-	if(%b $= "")
+	
+	%obj.messageAll("\c3" @ %winners SPC "\c6won\c2" SPC %potType SPC "\c6of\c2" SPC %winnings SPC "chips" @ %handstring @ "\c6.");
+
+	if(getFieldCount(%showDown) == 0)
 	{
-		%val = %a - %obj.game.minStake();
+		%count = %seats.count();
+		%player = %seats.next(0);
+		for(%i = 0; %i < %count; %i++)
+		{
+			if(%game.playerStack(%player) == 0)
+			{
+				%c = %obj.seatClient[%player];
+				%c.chatMessage("\c5You ran out of chips!");
+				%obj.remove(%c);	
+			}
+			%player = %seats.next(%player + 1);
+		}
+
+		if(%obj.automated && %obj.game.seats.count() >= 2)
+		{
+			%obj.messageAll("\c6The game will restart in \c210 seconds...");
+			%obj.startSchedule = %obj.schedule(10000,"start");
+		}
+		return;
 	}
-	else if(%a $= "to")
-	{
-		%val = %b - %obj.game.minStake();
-	}
-	else if(%a $= "by")
-	{
-		%val = %b + 0;
-	}
-	if(!%obj.game.canRaise() || %val <= 0)
-	{
-		return false;
-	}
-	%obj.game.raise(%val);
-	return true;
-}
-function HoldemGame::bet(%obj,%vars)
-{
-	%val = getWord(%vars,0) - %obj.game.minStake();
-	if(!%obj.game.canBet() || %val <= 0)
-	{
-		return false;
-	}
-	%obj.game.bet(%val);
-	return true;
+
+	%obj.schedule(1000,"pots",%showdown);
 }
 
 function HoldemGame::Command(%obj,%s)
@@ -501,17 +466,61 @@ function HoldemGame::Command(%obj,%s)
 		switch(%i)
 		{
 		case 0:
-			%handled = %obj.fold(%vars);
+			%obj.game.fold();
+			%curr = %obj.game.curr();
+			%obj.table.playerHand(%obj.seatClient[%curr],%curr,"");
+			serverPlay3d(Casino_GetRandomSound("CardShove",3),%obj.table.playerStake[%obj.game.curr()]);
+			%handled = true;
 		case 1:
-			%handled = %obj.check(%vars);
+			if(!%obj.game.canCheck())
+			{
+				%handled = false;
+			}
+			else
+			{
+				%obj.game.check();
+				%handled = true;
+			}
 		case 2:
-			%handled = %obj.call(%vars);
+			if(!%obj.game.canCall())
+			{
+				%handled = false;
+			}
+			else
+			{
+				%obj.game.call();
+				%handled = true;
+			}
 		case 3:
-			%handled = %obj.allin(%vars);
+			serverPlay3d(Casino_GetRandomSound("Chip",3),%obj.table.playerStake[%obj.game.curr()]);
+			%obj.game.allin();
+			%handled = true;
 		case 4:
-			%handled = %obj.raise(%vars);
-		case 5:
-			%handled = %obj.bet(%vars);
+			%a = getWord(%vars,0);
+			%b = getWord(%vars,1);
+			if(%b $= "")
+			{
+				%val = %a - %obj.game.minStake();
+			}
+			else if(%a $= "to")
+			{
+				%val = %b - %obj.game.minStake();
+			}
+			else if(%a $= "by")
+			{
+				%val = %b + 0;
+			}
+
+			if(!%obj.game.canRaise() || %val <= 0)
+			{
+				%handled = false;
+			}
+			else
+			{
+				%obj.game.raise(%val);
+				serverPlay3d(Casino_GetRandomSound("Chip",3),%obj.table.playerStake[%obj.game.curr()]);
+				%handled = true;
+			}
 		}
 
 		if(%handled)
@@ -536,7 +545,7 @@ function HoldemGame::pickup(%obj,%c,%p)
 	if(%mounted != 0 && %mounted.getDatablock() == CasinoCardHolderPlayer.getId())
 	{
 		%obj.table.playerHand(%p,%seat,%obj.game.cards.get("hand"@%seat),false);
-		serverPlay3d("cardPlace"@getRandom(1,4)@"Sound",%p.getPosition());
+		serverPlay3d(Casino_GetRandomSound("cardPlace",4),%p.getPosition());
 		return "";
 	}
 
@@ -550,7 +559,7 @@ function HoldemGame::pickup(%obj,%c,%p)
 	if(vectorDist(%Pos,%cardPos) < 1)
 	{
 		%obj.table.playerHand(%p,%seat,%obj.game.cards.get("hand"@%seat),true);
-		serverPlay3d("cardPick"@getRandom(1,4)@"Sound",%p.getPosition());
+		serverPlay3d(Casino_GetRandomSound("cardShove",3),%p.getPosition());
 	}
 }
 

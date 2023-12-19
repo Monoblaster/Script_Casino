@@ -236,7 +236,7 @@ function Holdem::dealCommunity(%obj)
 
 function Holdem::canAllIn(%obj)
 {
-	return %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1 || %obj.playerStack[%obj.seats.curr()] <= %obj.lastBet;
+	return %obj.seats.count() - %obj.foldedCount - %obj.allInCount != 1 || %obj.playerStack[%obj.seats.curr()] < %obj.lastBet;
 }
 
 function Holdem::canRaise(%obj)
@@ -277,6 +277,12 @@ function Holdem::check(%obj)
 
 function Holdem::allIn(%obj)
 {
+	if(%obj.newPot)
+	{
+		%obj.pot[%obj.potCount++] = 0;
+		%obj.newPot = false;
+	}
+
 	%obj.allInCount++;
 	%obj.playerAllIn[%obj.seats.curr()] = true;
 
@@ -326,7 +332,7 @@ function Holdem::addToPot(%obj,%n)
 	%curr = %obj.seats.curr();
 	%obj.playerStack[%curr] -= %n;
 	%obj.pot[%obj.potCount - 1] += %n;
-	%obj.eligablePot[%curr] = %obj.potCount;
+	%obj.eligablePot[%curr] = %obj.potCount - 1;
 	%obj.playerStake[%curr] += %n;
 	%obj.minStake = %obj.playerStake[%curr];
 	return %obj;
@@ -498,12 +504,12 @@ function Holdem::showdown(%obj)
 	for(%potDepth = 0; %potDepth < %obj.potCount; %potDepth++)
 	{
 		%player = %seats.next(%obj.dealerButton + 1);
-		%winners = %player;
-		%winnerCompare = %compare[%player];
-		for(%i = 1; %i < %count; %i++)
+		%winners = "";
+		%winnerCompare = "";
+		for(%i = 0; %i < %count; %i++)
 		{
-			%player = %seats.next(%player + 1);
-			if(%obj.eligablePot[%player] >= %potDepth)
+			
+			if(%obj.eligablePot[%player] <= %potDepth)
 			{
 				%currCompare = %compare[%player];
 				%diff = Poker_Compare(%currCompare,%winnerCompare);
@@ -517,6 +523,7 @@ function Holdem::showdown(%obj)
 					%winners = %winners SPC %player;
 				}
 			}
+			%player = %seats.next(%player + 1);
 		}
 
 		%winnerCount = getWordCount(%winners);
