@@ -81,7 +81,7 @@ function tableProximitySchedule(%client)
 	}
 
 	%player = %client.player;
-	if(!isObject(%player) && %game.currinput !$= "")
+	if(!isObject(%player) && (%game.currinput !$= "" || isEventPending(%game.startSchedule)))
 	{
 		%game.remove(%client);
 		return;
@@ -90,7 +90,7 @@ function tableProximitySchedule(%client)
 	%playerPos = setWord(%player.getPosition(),2,0);
 	%handPos = setWord(%game.table.playerButton[%game.clientSeat[%client]],2,0);
 
-	if(vectorDist(%playerPos,%handPos) > 3 && %game.currinput !$= "")
+	if(vectorDist(%playerPos,%handPos) > 3 && (%game.currinput !$= "" || isEventPending(%game.startSchedule)))
 	{
 		%game.remove(%client);
 		return;
@@ -571,14 +571,14 @@ function HoldemGame::CasinoMessage(%obj,%sender,%s)
 	{
 		%client = %group.getObject(%i);
 		
-		if(%client.casinoGame != %sender.casinoGame && isOObject(%client.casinoGame))
+		if(%client.casinoGame != %sender.casinoGame && isObject(%client.casinoGame))
 		{
 			continue;
 		}
 
 		if(%client.casinoGame == %sender.casinoGame)
 		{
-			chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %client.clanPrefix, %client.getPlayerName (), %client.clanSuffix, %s);
+			chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %sender.clanPrefix, %sender.getPlayerName (), %sender.clanSuffix, %s);
 			continue;
 		}
 
@@ -593,7 +593,7 @@ function HoldemGame::CasinoMessage(%obj,%sender,%s)
 			continue;
 		}
 
-		chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %client.clanPrefix, %client.getPlayerName (), %client.clanSuffix, %s);
+		chatMessageClient(%client, %sender, %voiceTag, %voicePitch, '\c2(Casino) \c7%1\c3%2\c7%3\c6: %4', %sender.clanPrefix, %sender.getPlayerName (), %sender.clanSuffix, %s);
 		continue;
 	}
 }
