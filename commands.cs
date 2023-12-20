@@ -304,6 +304,7 @@ function serverCmdJoinTexasHoldem(%client)
 			NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %client.getBLID() TAB %client.name TAB
 			"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %client.NYmoney
 		);
+		%client.savePersistence();
 	}
 	else
 	{
