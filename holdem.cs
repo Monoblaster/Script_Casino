@@ -158,7 +158,10 @@ function Holdem::NextHand(%obj,%bigBlind)
 	%curr = %seats.curr();
 	if(%obj.playerStack[%curr] > %blind)
 	{
-		%obj.bet(%blind).nextTurn();
+		%obj.lastBet = %blind;
+		%obj.noChangeCount = 1;
+		%obj.addToPot(%blind);
+		%obj.nextTurn();
 	}
 	else
 	{
@@ -169,7 +172,10 @@ function Holdem::NextHand(%obj,%bigBlind)
 	%curr = %seats.curr();
 	if(%obj.playerStack[%curr] > %blind)
 	{
-		%obj.bet(%blind).nextTurn();
+		%obj.lastBet = %blind;
+		%obj.noChangeCount = 1;
+		%obj.addToPot(%blind);
+		%obj.nextTurn();
 	}
 	else
 	{
@@ -300,9 +306,12 @@ function Holdem::allIn(%obj)
 
 function Holdem::raise(%obj,%n)
 {
-	%obj.call();
-	%obj.bet(%n);
-	return %n;
+	if(%obj.playerStack[%obj.seats.curr()] >= (%n + %obj.minStake()))
+	{
+		%obj.call();
+		%obj.bet(%n);
+	}
+	return %obj;
 }
 
 function Holdem::call(%obj)

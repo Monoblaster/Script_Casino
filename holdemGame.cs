@@ -80,8 +80,10 @@ function tableProximitySchedule(%client)
 		return;
 	}
 
+	%canLeave = %game.currinput !$= "" || isEventPending(%game.startSchedule) || %game.game.seats.count() == 1;
+
 	%player = %client.player;
-	if(!isObject(%player) && (%game.currinput !$= "" || isEventPending(%game.startSchedule)))
+	if(!isObject(%player) && %canLeave)
 	{
 		%game.remove(%client);
 		return;
@@ -90,7 +92,7 @@ function tableProximitySchedule(%client)
 	%playerPos = setWord(%player.getPosition(),2,0);
 	%handPos = setWord(%game.table.playerButton[%game.clientSeat[%client]],2,0);
 
-	if(vectorDist(%playerPos,%handPos) > 3 && (%game.currinput !$= "" || isEventPending(%game.startSchedule)))
+	if(vectorDist(%playerPos,%handPos) > 3 && %canLeave)
 	{
 		%game.remove(%client);
 		return;
@@ -164,13 +166,13 @@ function HoldemGame::promptInput(%obj)
 
 	if(%obj.automated)
 	{
-		%timelimit = "You have \c215 seconds\c5.";
-		%obj.takeTooLongSchedule = %obj.schedule(15000,"Command","Fold (Ran out of time)");
+		%timelimit = "You have \c220 seconds\c5.";
+		%obj.takeTooLongSchedule = %obj.schedule(20000,"Command","Fold (Ran out of time)");
 	}
 	
 	%c.chatMessage("\c5Take your turn, you can\c2" SPC stringList(%o," ","\c5,\c2","\c5or\c2") @"\c5." SPC %timelimit);
 	%obj.messageAll("\c6It is\c3" SPC %c.getPlayerName() @ "\c6's turn.",%c);
-	%c.playSound("BrickChangeSound");
+	%c.playSound("Beep_Popup_Sound");
 }
 
 function HoldemGame::start(%obj,%blind)
@@ -513,6 +515,7 @@ function HoldemGame::Command(%obj,%s)
 
 			if(!%obj.game.canRaise() || %val <= 0)
 			{
+				%obj.seatClient[%obj.game.curr()].chatMessage("\c5You cannot raise to" SPC %val SPC "chips");
 				%handled = false;
 			}
 			else
