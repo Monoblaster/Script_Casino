@@ -252,7 +252,7 @@ function Holdem::canRaise(%obj)
 
 function Holdem::canCall(%obj)
 {
-	return %obj.playerStack[%obj.seats.curr()] > %obj.lastBet && %obj.lastBet != 0 && %obj.playerStake[%obj.seats.curr()] != %obj.minStake;
+	return %obj.playerStack[%obj.seats.curr()] >= %obj.lastBet && %obj.lastBet != 0 && %obj.playerStake[%obj.seats.curr()] != %obj.minStake;
 }
 
 function Holdem::canCheck(%obj)
