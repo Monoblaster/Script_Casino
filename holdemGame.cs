@@ -115,8 +115,8 @@ function HoldemGame::remove(%obj,%c)
 		%obj.command("Fold (Left the game)");
 	}
 	
-	%c.chatMessage("\c6You have been removed from Texas Hold'em and your chips have been exchanged. Please leave your seat.");
-	NYgiveClientMoney(%c, mCeil(%obj.game.playerStack(%seat) / %obj.exchange));
+	%c.chatMessage("\c6You and your chips have been removed from Texas Hold'em. Please leave your seat.");
+	%c.CasinoChips += %obj.game.playerStack(%seat);
 	%obj.game.setPlayer(%seat,false,0);
 	%obj.seatClient[%seat] = "";
 	%obj.listClient.remove(%c);

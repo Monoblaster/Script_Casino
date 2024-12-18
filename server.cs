@@ -45,34 +45,56 @@ function Casino_GetRandomSound(%name,%count)
 	return %name @ getRandom(1,%count) @ "Sound";
 }
 
+function Casino_GetCurrentSecondOfTheMinute()
+{
+	return mFloor(getSubStr(getDateTime(), 15, 2));
+}
+
+$Casino::IncomeTime = 10; // in minutes
+$Casino::IncomeAmount = 10;
+
 $Persistence::MatchName["CasinoChips"] = true;
 $Persistence::MatchName["CasinoLastIncomeMinute"] = true;
+$Persistence::MatchName["CasinoLastIncomeSecond"] = true;
 
-rregisterOutputEvent("fxDTSBrick", "CasinoIncome", "", true);
+registerOutputEvent("fxDTSBrick", "CasinoIncome", "", true);
+
+function serverCmdCasinoChips(%client)
+{
+   if(%client.CasinoChips == 1)
+   {
+      %client.chatMessage("\c6You have \c51 chip\c6 in storage. :(");
+      return;
+   }
+   
+   %client.chatMessage("\c6You have \c5" @ %client.CasinoChips @ " chips\c6 in storage.");
+}
 
 function fxDTSBrick::CasinoIncome(%brick,%client)
 { 
-   %remainingMinutes = %client.CasinoLastIncomeMinute + 10 - getCurrentMinuteOfYear();
+   %remainingMinutes = %client.CasinoLastIncomeMinute + $Casino::IncomeTime - getCurrentMinuteOfYear() +  (%client.CasinoLastIncomeSecond - Casino_GetCurrentSecondOfTheMinute()) / 60;
    if(%remainingMinutes > 9.92) // cooldown for a couple seconds after claiming to stop you form missing the claim message
    {
       return;
    }
 
-   if(%elapsedMinutes > 0)
+   if(%remainingMinutes > 0)
    {
-      if(%elapsedMinutes <= 1)
+      if(%remainingMinutes <= 1)
       {
-         %client.centerPrint("\c6Come again in " @ mCeil(%remainingMinutes * 60) @ " seconds.",2);
+         %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes * 60) @ " seconds\c6. Use \c5/CasinoChips\c6 to see your current balance.",2);
+         return;
       }
 
-      %client.centerPrint("\c6Come again in " @ mCeil(%remainingMinutes) @ " minutes.",2);
+      %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes) @ " minutes\c6. Use \c5/CasinoChips\c6 to see your current balance.",2);
       return;
    }
 
    %client.CasinoLastIncomeMinute = getCurrentMinuteOfYear();
-   %client.CasinoChips += 10;
+   %client.CasinoLastIncomeSecond = Casino_GetCurrentSecondOfTheMinute();
+   %client.CasinoChips += $Casino::IncomeAmount;
 
-   %client.centerPrint("\c6You have claimed your 10 chips! Come again in 10 minutes to get 10 more.",2);
+   %client.centerPrint("\c6You have claimed your \c5" @ $Casino::IncomeAmount @ " chips\c6 and now have \c5" @ %client.CasinoChips @ " chips\c6 in storage! Come again in \c5" @ $Casino::IncomeTime @ " minutes\c6 to get " @ $Casino::IncomeAmount @ " more.",2);
 }
 
 exec("./lookuptables.cs");
