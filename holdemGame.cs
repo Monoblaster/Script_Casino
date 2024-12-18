@@ -3,9 +3,9 @@ if(!isObject($HoldemGame::Group))
 	$HoldemGame::Group = new SimSet();
 }
 
-function HoldemGame_Create(%table,%exchange)
+function HoldemGame_Create(%table)
 {
-	return new ScriptObject(){class = "HoldemGame";exchange = %exchange;table = %table;blinds = 10;};
+	return new ScriptObject(){class = "HoldemGame";exchange = 1;table = %table;blinds = 10;}; //exchange rate changed to always be 1 cause buy in is in chips
 }
 
 function HoldemGame::OnAdd(%obj)

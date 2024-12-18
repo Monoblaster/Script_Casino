@@ -255,7 +255,7 @@ package HoldemCommands
 			%buyin = %game.buyin;
 			%c.promptedholdemtable = %game;
 			%c.promptedholdemtableseat = %i;
-			commandToClient(%c, 'MessageBoxYesNo', 'Join', 'The buy-in is %2 points for %3 chips.<br>Do you wish to join?','JoinTexasHoldem',%buyin,mFloor(%game.exchange * %buyIn));
+			commandToClient(%c, 'MessageBoxYesNo', 'Join', 'The buy-in is %2 chips.<br>Do you wish to join?','JoinTexasHoldem',%buyin,mFloor(%game.exchange * %buyIn));
 
 			break;
 		}
@@ -286,7 +286,7 @@ function serverCmdJoinTexasHoldem(%client)
 	}
 
 	%buyIn = %game.buyin;
-	if(%buyIn >= %client.NYmoney)
+	if(%buyIn >= %client.CasinoChips)
 	{
 		%client.chatMessage("\c5You don't have enough money.");
 		return;
@@ -295,15 +295,9 @@ function serverCmdJoinTexasHoldem(%client)
 
 	if(%game.add(%client,%buyIn,%client.promptedholdemtableseat))
 	{
-		%client.NYmoney -= %buyIn;
-		%client.setScore(%client.NYmoney);
+		%client.CasinoChips -= %buyIn;
 
-		messageclient(%client, '', "\c3You paid \c6" @ %buyIn @ "\c3 points; you now have \c6" @ %client.NYmoney @ "\c3 points and \c6" @ mFloor(%game.exchange * %buyIn) @ "\c3 chips.");
-
-		NYlogs_write("config/server/LogNewYear/money.txt",
-			NYlogs_addTime() TAB "MONEY_UPDATE" TAB "NYgiveClientMoney" TAB %client.getBLID() TAB %client.name TAB
-			"AMOUNT" TAB %buyIn TAB "NEW_VALUE" TAB %client.NYmoney
-		);
+		messageclient(%client, '', "\c3You bought in with \c6" @ %buyIn @ "\c3 chips and you now have \c6" @ %client.CasinoChips @ "\c3 chips in storage.");
 		%client.savePersistence();
 	}
 	else
