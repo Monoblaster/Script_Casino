@@ -40,6 +40,21 @@ $Poker::Card[$c++] = "Queen";
 $Poker::Card[$c++] = "King";
 
 $c = -1;
+$Poker::ShortCard[$c++] = "A";
+$Poker::ShortCard[$c++] = "2";
+$Poker::ShortCard[$c++] = "3";
+$Poker::ShortCard[$c++] = "4";
+$Poker::ShortCard[$c++] = "5";
+$Poker::ShortCard[$c++] = "6";
+$Poker::ShortCard[$c++] = "7";
+$Poker::ShortCard[$c++] = "8";
+$Poker::ShortCard[$c++] = "9";
+$Poker::ShortCard[$c++] = "10";
+$Poker::ShortCard[$c++] = "J";
+$Poker::ShortCard[$c++] = "Q";
+$Poker::ShortCard[$c++] = "K";
+
+$c = -1;
 $Poker::Card[$Poker::Card[$c]] = $c++;
 $Poker::Card[$Poker::Card[$c]] = $c++;
 $Poker::Card[$Poker::Card[$c]] = $c++;
@@ -100,17 +115,18 @@ function Poker_Name(%n)
 	return $Poker::Card[%n % 13] SPC "of" SPC $Poker::Suit[1 << mFloor(%n / 13)];
 }
 
+function Poker_ShortName(%n)
+{
+	%suit = $Poker::Suit[1 << mFloor(%n / 13)];
+	%color = "<color:ff0000>";
+	if(%suit $= "Clubs" || %suit $= "Spades")
+	{
+		%color = "<color:000000>";
+	}
+	return "\c6\cp" @ %color @ $Poker::ShortCard[%n % 13] @ "\co" @ "<bitmap:Add-Ons/Script_Casino/" @ %suit @ ">";
+}
+
 function Poker_Num(%s)
 {
 	echo($Poker::Card[getWord(%s,0)] + mLog($Poker::Suit[getWord(%s,2)])/mLog(2) * 13);
-}
-
-function Poker_Bitmap(%n)
-{
-	%rank = %n % 13 + 1;
-	if(%rank < 10)
-	{
-		%rank = 0 @ %rank;
-	}
-	return "<bitmap:add-ons/script_casino/c" @ getSubStr($Poker::Suit[1 << mFloor(%n / 13)],0,1) @ %rank @ ">";
 }

@@ -61,8 +61,8 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 	%c.casinoGame = %obj; 
 	if(%obj.automated)
 	{
-		cancel(%c.tableProximitySchedule);
-		tableProximitySchedule(%c);
+		// cancel(%c.tableProximitySchedule);
+		// tableProximitySchedule(%c);
 		if(!isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
 		{
 			%obj.start();
@@ -536,6 +536,12 @@ function HoldemGame::Command(%obj,%s)
 	return %handled;
 }
 
+function HoldemGameCardViewLoop(%c,%card1,%card2)
+{
+	%c.centerPrint("<just:left><font:consolas:50><lmargin%:30>" @ Poker_ShortName(%card1) @ Poker_ShortName(%card2),5);
+	%c.HoldemGameCardViewLoop = schedule(100,"","HoldemGameCardViewLoop",%c,%card1,%card2);
+}
+
 function HoldemGame::pickup(%obj,%c,%p)
 {
 	%seat = %obj.clientSeat[%c];
@@ -547,7 +553,9 @@ function HoldemGame::pickup(%obj,%c,%p)
 	%mounted = %p.getMountNodeObject(7);
 	if(%mounted != 0 && %mounted.getDatablock() == CasinoCardHolderPlayer.getId())
 	{
-		%obj.table.playerHand(%p,%seat,%obj.game.cards.get("hand"@%seat),false);
+		%obj.table.playerHand(%p,%seat,"0 0",false);
+		cancel(%c.HoldemGameCardViewLoop);
+		%c.centerPrint("");
 		serverPlay3d(Casino_GetRandomSound("cardPlace",4),%p.getPosition());
 		return "";
 	}
@@ -561,7 +569,9 @@ function HoldemGame::pickup(%obj,%c,%p)
 	%cardPos = %obj.table.playerHand[%seat,0];
 	if(vectorDist(%Pos,%cardPos) < 1)
 	{
-		%obj.table.playerHand(%p,%seat,%obj.game.cards.get("hand"@%seat),true);
+		%obj.table.playerHand(%p,%seat,"0 0",true);
+		%cards = %obj.game.cards.get("hand"@%seat);
+		HoldemGameCardViewLoop(%c,getWord(%cards,0),getWord(%cards,1));
 		serverPlay3d(Casino_GetRandomSound("cardShove",3),%p.getPosition());
 	}
 }

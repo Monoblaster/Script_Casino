@@ -94,7 +94,7 @@ function fxDTSBrick::CasinoIncome(%brick,%client)
    %client.CasinoLastIncomeSecond = Casino_GetCurrentSecondOfTheMinute();
    %client.CasinoChips += $Casino::IncomeAmount;
 
-   %client.centerPrint("\c6You have claimed your \c5" @ $Casino::IncomeAmount @ " chips\c6 and now have \c5" @ %client.CasinoChips @ " chips\c6 in storage! Come again in \c5" @ $Casino::IncomeTime @ " minutes\c6 to get " @ $Casino::IncomeAmount @ " more.",2);
+   %client.centerPrint("\c6You have claimed your \c5" @ $Casino::IncomeAmount @ " chips\c6 and now have \c5" @ %client.CasinoChips @ " chips\c6 in storage!<br>\c6 Come again in \c5" @ $Casino::IncomeTime @ " minutes\c6 to get " @ $Casino::IncomeAmount @ " more.",2);
 }
 
 exec("./lookuptables.cs");

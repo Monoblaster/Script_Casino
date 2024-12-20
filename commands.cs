@@ -185,6 +185,8 @@ function serverCmdClosestTable(%c)
 	}
 }
 
+function serverCmdMessageBoxNo(%client){}
+
 package HoldemCommands
 {
 	function Player::ActivateStuff(%p)
@@ -286,9 +288,9 @@ function serverCmdJoinTexasHoldem(%client)
 	}
 
 	%buyIn = %game.buyin;
-	if(%buyIn >= %client.CasinoChips)
+	if(%buyIn > %client.CasinoChips)
 	{
-		%client.chatMessage("\c5You don't have enough money.");
+		%client.chatMessage("\c5You don't have enough chips.");
 		return;
 	}
 

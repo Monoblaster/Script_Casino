@@ -52,7 +52,7 @@ function CasinoCardPlayer::SetCard(%data,%obj,%n)
 	{
 		%obj.unHideNode("cardback");
 		%obj.unHideNode("card");
-		%obj.unHideNode(%s);
+		//%obj.unHideNode(%n); to hide card faces
 	}
 	return %obj;
 }
@@ -244,7 +244,7 @@ function CasinoCardShape::SetCard(%data,%obj,%n)
 	{
 		%obj.unHideNode("cardback");
 		%obj.unHideNode("card");
-		%obj.unHideNode(%s);
+		//%obj.unHideNode(%n); to hide card faces
 	}
 	return %obj;
 }
@@ -459,6 +459,7 @@ function HoldemTable::playerHand(%obj,%p,%c,%h,%hold,%show)
 	if(%hold)
 	{
 		%obj.playerHolder[%c] = %holder = CasinoCardHolderPlayer.create();
+		// %holder.setTransform(%p.getTransform());
 		%p.mountObject(%holder,7);
 		CasinoCardHolderPlayer.show(CasinoCardHolderPlayer.setDisplay(%holder,%h));
 	}
