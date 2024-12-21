@@ -106,3 +106,8 @@ exec("./holdem.cs");
 exec("./holdemgame.cs");
 exec("./holdemtable.cs");
 exec("./commands.cs");
+exec("./extraResources");
+addExtraResource("Add-Ons/Script_Casino/clubs.png");
+addExtraResource("Add-Ons/Script_Casino/hearts.png");
+addExtraResource("Add-Ons/Script_Casino/spades.png");
+addExtraResource("Add-Ons/Script_Casino/diamonds.png");
