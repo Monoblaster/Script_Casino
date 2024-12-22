@@ -32,10 +32,10 @@ function HoldemGame::OnRemove(%obj)
 
 function HoldemGame::add(%obj,%c,%buy,%seat)
 {
-	if(%c.casinoGame !$= "" || !isObject(%c))
-	{
-		return false;
-	}
+	// if(%c.casinoGame !$= "" || !isObject(%c))
+	// {
+	// 	return false;
+	// }
 
 	%p = %c.player;
 	
@@ -553,7 +553,7 @@ function HoldemGame::pickup(%obj,%c,%p)
 	%mounted = %p.getMountNodeObject(7);
 	if(%mounted != 0 && %mounted.getDatablock() == CasinoCardHolderPlayer.getId())
 	{
-		%obj.table.playerHand(%p,%seat,"0 0",false);
+		%obj.table.playerHand(%p,%seat,"blank blank",false);
 		cancel(%c.HoldemGameCardViewLoop);
 		%c.centerPrint("");
 		serverPlay3d(Casino_GetRandomSound("cardPlace",4),%p.getPosition());
@@ -569,7 +569,7 @@ function HoldemGame::pickup(%obj,%c,%p)
 	%cardPos = %obj.table.playerHand[%seat,0];
 	if(vectorDist(%Pos,%cardPos) < 1)
 	{
-		%obj.table.playerHand(%p,%seat,"0 0",true);
+		%obj.table.playerHand(%p,%seat,"blank blank",true);
 		%cards = %obj.game.cards.get("hand"@%seat);
 		HoldemGameCardViewLoop(%c,getWord(%cards,0),getWord(%cards,1));
 		serverPlay3d(Casino_GetRandomSound("cardShove",3),%p.getPosition());

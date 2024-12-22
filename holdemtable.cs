@@ -39,20 +39,22 @@ function CasinoCardPlayer::OnAdd(%data,%obj)
 
 function CasinoCardPlayer::SetCard(%data,%obj,%n)
 {
-	switch (mFloor(%n / 13)) {
-		case 0: %suit = "c_";
-		case 1: %suit = "h_";
-		case 2: %suit = "s_";
-		case 3: %suit = "d_";
-	}
-	%s = %suit @ (%n % 13 + 1);
-
 	%obj.hideNode("ALL");
 	if(%n !$= "")
 	{
+		if(%n !$= "blank")
+		{
+			switch (mFloor(%n / 13)) {
+				case 0: %suit = "c_";
+				case 1: %suit = "h_";
+				case 2: %suit = "s_";
+				case 3: %suit = "d_";
+			}
+			%obj.unHideNode(%suit @ (%n % 13 + 1));
+		}
+
 		%obj.unHideNode("cardback");
 		%obj.unHideNode("card");
-		//%obj.unHideNode(%n); to hide card faces
 	}
 	return %obj;
 }
@@ -231,20 +233,22 @@ function CasinoCardShape::OnAdd(%data,%obj)
 
 function CasinoCardShape::SetCard(%data,%obj,%n)
 {
-	switch (mFloor(%n / 13)) {
-		case 0: %suit = "c_";
-		case 1: %suit = "h_";
-		case 2: %suit = "s_";
-		case 3: %suit = "d_";
-	}
-	%s = %suit @ (%n % 13 + 1);
-
 	%obj.hideNode("ALL");
 	if(%n !$= "")
 	{
+		if(%n !$= "blank")
+		{
+			switch (mFloor(%n / 13)) {
+				case 0: %suit = "c_";
+				case 1: %suit = "h_";
+				case 2: %suit = "s_";
+				case 3: %suit = "d_";
+			}
+			%obj.unHideNode(%suit @ (%n % 13 + 1));
+		}
+
 		%obj.unHideNode("cardback");
 		%obj.unHideNode("card");
-		//%obj.unHideNode(%n); to hide card faces
 	}
 	return %obj;
 }

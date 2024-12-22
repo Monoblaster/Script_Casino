@@ -58,6 +58,7 @@ $Persistence::MatchName["CasinoLastIncomeMinute"] = true;
 $Persistence::MatchName["CasinoLastIncomeSecond"] = true;
 
 registerOutputEvent("fxDTSBrick", "CasinoIncome", "", true);
+registerInputEvent("fxDTSBrick", "onCasinoIncome", "Self fxDTSBrick" TAB "Player Player" TAB "Client GameConnection" TAB "MiniGame MiniGame");
 
 function serverCmdCasinoChips(%client)
 {
@@ -68,6 +69,26 @@ function serverCmdCasinoChips(%client)
    }
    
    %client.chatMessage("\c6You have \c5" @ %client.CasinoChips @ " chips\c6 in storage.");
+}
+
+function fxDTSBrick::onCasinoIncome(%obj, %player, %client)
+{
+	$InputTarget_["Self"] = %obj;
+	$InputTarget_["Player"] = %player;
+	$InputTarget_["Client"] = %client;
+	if ($Server::LAN)
+	{
+		$InputTarget_["MiniGame"] = getMiniGameFromObject(%client);
+	}
+	else if (getMiniGameFromObject(%obj) == getMiniGameFromObject(%client))
+	{
+		$InputTarget_["MiniGame"] = getMiniGameFromObject(%obj);
+	}
+	else
+	{
+		$InputTarget_["MiniGame"] = 0;
+	}
+	%obj.processInputEvent("onCasinoIncome", %client);
 }
 
 function fxDTSBrick::CasinoIncome(%brick,%client)
@@ -82,11 +103,11 @@ function fxDTSBrick::CasinoIncome(%brick,%client)
    {
       if(%remainingMinutes <= 1)
       {
-         %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes * 60) @ " seconds\c6. Use \c5/CasinoChips\c6 to see your current balance.",2);
+         %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes * 60) @ " seconds\c6. Use \c5/CasinoChips\c6 to see your current balance.",3);
          return;
       }
 
-      %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes) @ " minutes\c6. Use \c5/CasinoChips\c6 to see your current balance.",2);
+      %client.centerPrint("\c6Come again in \c5" @ mCeil(%remainingMinutes) @ " minutes\c6. Use \c5/CasinoChips\c6 to see your current balance.",3);
       return;
    }
 
@@ -94,7 +115,9 @@ function fxDTSBrick::CasinoIncome(%brick,%client)
    %client.CasinoLastIncomeSecond = Casino_GetCurrentSecondOfTheMinute();
    %client.CasinoChips += $Casino::IncomeAmount;
 
-   %client.centerPrint("\c6You have claimed your \c5" @ $Casino::IncomeAmount @ " chips\c6 and now have \c5" @ %client.CasinoChips @ " chips\c6 in storage!<br>\c6 Come again in \c5" @ $Casino::IncomeTime @ " minutes\c6 to get " @ $Casino::IncomeAmount @ " more.",2);
+   %brick.onCasinoIncome(%obj, %client.player, %client);
+   %client.centerPrint("\c6You have claimed your \c5" @ $Casino::IncomeAmount @ " chips\c6 and now have \c5" @ %client.CasinoChips 
+   @ " chips\c6 in storage!<br>\c6 Come again in \c5" @ $Casino::IncomeTime @ " minutes\c6 to get " @ $Casino::IncomeAmount @ " more.",5);
 }
 
 exec("./lookuptables.cs");
