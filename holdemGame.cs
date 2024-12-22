@@ -32,10 +32,10 @@ function HoldemGame::OnRemove(%obj)
 
 function HoldemGame::add(%obj,%c,%buy,%seat)
 {
-	// if(%c.casinoGame !$= "" || !isObject(%c))
-	// {
-	// 	return false;
-	// }
+	if(%c.casinoGame !$= "" || !isObject(%c))
+	{
+		return false;
+	}
 
 	%p = %c.player;
 	
