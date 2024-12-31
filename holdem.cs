@@ -27,6 +27,12 @@ function Holdem::setPlayer(%obj,%n,%in,%stack)
 	%obj.seats.setIn(%n,%in);
 	%obj.playerStack[%n] = %stack;
 
+	if(!%in && %obj.playerFolded[%n])
+	{
+		%obj.playerFolded[%n] = false;
+		%obj.foldedCount--;
+	}
+
 	return %obj;
 }
 
@@ -306,7 +312,7 @@ function Holdem::allIn(%obj)
 
 function Holdem::raise(%obj,%n)
 {
-	if(%obj.playerStack[%obj.seats.curr()] >= (%n + %obj.minStake()))
+	if(%obj.playerStack[%obj.seats.curr()] >= (%n + %obj.minStake() - %obj.playerStack[%obj.seats.curr()]))
 	{
 		%obj.call();
 		%obj.bet(%n);

@@ -61,8 +61,8 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 	%c.casinoGame = %obj; 
 	if(%obj.automated)
 	{
-		// cancel(%c.tableProximitySchedule);
-		// tableProximitySchedule(%c);
+		cancel(%c.tableProximitySchedule);
+		tableProximitySchedule(%c);
 		if(!isEventPending(%obj.startSchedule) && %obj.currInput $= "" && %obj.game.seats.count() >= 2)
 		{
 			%obj.start();
@@ -123,6 +123,8 @@ function HoldemGame::remove(%obj,%c)
 
 	%obj.table.playerStack(%seat);
 	%obj.table.playerStake(%seat);
+	cancel(%c.HoldemGameCardViewLoop);
+	%c.centerPrint("");
 	%obj.table.playerHand(%p,%seat);
 
 	if(%obj.automated)
@@ -205,6 +207,7 @@ function HoldemGame::start(%obj,%blind)
 	if(%obj.game.nextHand(%blind))
 	{
 		//message all the game has started and place blinds + deal animation
+		%obj.currInput = 127934689761234; // a value that hopefully isn't used by anything to kill any restart on join
 		%obj.messageAll("\c6A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
 		%game = %obj.game;
 		%seats = %game.seats;
@@ -360,18 +363,20 @@ function HoldemGame::next(%obj)
 		%obj.updateCommunity();
 
 		%seats = %game.seats;
-		if(%game.reveal())
+		%reveal = %game.reveal();
+		%count = %seats.count();
+		%seat = %seats.next(0);
+		for(%i = 0; %i < %count; %i++)
 		{
-			%count = %seats.count();
-			%player = %seats.next(0);
-			for(%i = 0; %i < %count; %i++)
+			cancel(%obj.seatClient[%seat].HoldemGameCardViewLoop);
+			%obj.seatClient[%seat].centerPrint("");
+			if(%game.playerFolded(%seat))
 			{
-				if(!%game.playerFolded(%i))
-				{
-					%obj.table.playerHand(%obj.seatClient[%player].player,%player,%game.cards.get("hand"@%player),false,true);
-				}
-				%player = %seats.next(%player + 1);
+				%seat = %seats.next(%seat + 1);
+				continue;
 			}
+			%obj.table.playerHand(%obj.seatClient[%seat].player,%seat,%game.cards.get("hand"@%seat),false,%reveal);
+			%seat = %seats.next(%seat + 1);
 		}
 
 		%obj.pots(%obj.game.showdown());
@@ -470,7 +475,9 @@ function HoldemGame::Command(%obj,%s)
 		case 0:
 			%obj.game.fold();
 			%curr = %obj.game.curr();
-			%obj.table.playerHand(%obj.seatClient[%curr],%curr,"");
+			cancel(%obj.seatClient[%curr].HoldemGameCardViewLoop);
+			%obj.seatClient[%curr].centerPrint("");
+			%obj.table.playerHand(%obj.seatClient[%curr].player,%curr);
 			serverPlay3d(Casino_GetRandomSound("CardShove",3),%obj.table.playerStake[%obj.game.curr()]);
 			%handled = true;
 		case 1:
@@ -538,11 +545,11 @@ function HoldemGame::Command(%obj,%s)
 
 function HoldemGameCardViewLoop(%c,%card1,%card2)
 {
-	%c.centerPrint("<just:left><font:consolas:50><lmargin%:30>" @ Poker_ShortName(%card1) @ Poker_ShortName(%card2),5);
-	%c.HoldemGameCardViewLoop = schedule(100,"","HoldemGameCardViewLoop",%c,%card1,%card2);
+	%c.centerPrint("<just:left><font:consolas:50><lmargin%:26>" @ Poker_ShortName(%card1) SPC Poker_ShortName(%card2),5);
+	%c.HoldemGameCardViewLoop = schedule(100,0,"HoldemGameCardViewLoop",%c,%card1,%card2);
 }
 
-function HoldemGame::pickup(%obj,%c,%p)
+function HoldemGame::pickup(%obj,%c,%p,%onlyputdown)
 {
 	%seat = %obj.clientSeat[%c];
 	if(%obj.currInput $= "" || %obj.game.playerFolded(%seat))
@@ -557,6 +564,11 @@ function HoldemGame::pickup(%obj,%c,%p)
 		cancel(%c.HoldemGameCardViewLoop);
 		%c.centerPrint("");
 		serverPlay3d(Casino_GetRandomSound("cardPlace",4),%p.getPosition());
+		return "";
+	}
+
+	if(%onlyputdown)
+	{
 		return "";
 	}
 
@@ -642,6 +654,7 @@ package HoldemGame
 		if(isObject(%c.casinoGame))
 		{
 			%c.casinoGame.remove(%c);
+			%c.savePersistence();
 		}
 		parent::onClientLeaveGame(%c);
 	}

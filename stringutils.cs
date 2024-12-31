@@ -114,7 +114,7 @@ function stringList(%s,%listSep,%comma,%type)
 		%w = getString(%s,%listSep,%j);
 		%s = setString(%s,%listSep,%j,%w @ %lists);
 	}
-	return %s;
+	return strReplace(%s,%listSep," ");
 }
 
 function sortRecords(%s,%comp)
