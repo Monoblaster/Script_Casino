@@ -299,7 +299,7 @@ function serverCmdJoinTexasHoldem(%client)
 	{
 		%client.CasinoChips -= %buyIn;
 
-		messageclient(%client, '', "\c3You bought in with \c6" @ %buyIn @ "\c3 chips and you now have \c6" @ %client.CasinoChips @ "\c3 chips in storage.");
+		messageclient(%client, '', "\c2(Casino) \c3You bought in with \c6" @ %buyIn @ "\c3 chips and you now have \c6" @ %client.CasinoChips @ "\c3 chips in storage.");
 		%client.savePersistence();
 	}
 	else

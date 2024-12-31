@@ -52,7 +52,7 @@ function HoldemGame::add(%obj,%c,%buy,%seat)
 	%obj.clientSeat[%c] = %seat;
 	%obj.seatClient[%seat] = %c;
 	%obj.listClient.add(%c);
-	%c.chatMessage("\c6You have been added to Texas Hold'em. Take your seat at seat \c5#" @ %seat + 1 @ "\c6.");
+	// %c.chatMessage("\c6You have been added to Texas Hold'em. Take your seat at seat \c5#" @ %seat + 1 @ "\c6.");
 	%obj.table.playerStack(%seat,%chips);
 	%obj.table.playerStake(%seat);
 	%obj.table.playerHand(%p,%seat);
@@ -80,7 +80,7 @@ function tableProximitySchedule(%client)
 		return;
 	}
 
-	%canLeave = %game.currinput !$= "" || isEventPending(%game.startSchedule) || %game.game.seats.count() == 1;
+	%canLeave = (%game.currinput !$= "" || isEventPending(%game.startSchedule) || %game.game.seats.count() == 1) && !%obj.dealing;
 
 	%player = %client.player;
 	if(!isObject(%player) && %canLeave)
@@ -115,8 +115,17 @@ function HoldemGame::remove(%obj,%c)
 		%obj.command("Fold (Left the game)");
 	}
 	
-	%c.chatMessage("\c6You and your chips have been removed from Texas Hold'em. Please leave your seat.");
-	%c.CasinoChips += %obj.game.playerStack(%seat);
+	%stack = %obj.game.playerStack(%seat);
+	if(%stack > 0)
+	{
+		%c.chatMessage("\c2(Casino) \c6You and your chips have been removed from Texas Hold'em. Please leave your seat.");
+	}
+	else
+	{
+		%c.chatMessage("\c2(Casino) \c6You and your brokeness have been removed from Texas Hold'em. Please leave your seat or come back in with more chips.");
+	}
+	
+	%c.CasinoChips += %stack;
 	%obj.game.setPlayer(%seat,false,0);
 	%obj.seatClient[%seat] = "";
 	%obj.listClient.remove(%c);
@@ -135,6 +144,24 @@ function HoldemGame::remove(%obj,%c)
 	%c.casinoGame = ""; 
 	
 	return true;
+}
+
+function HoldemGame_TakeTooLong(%holdemgame,%client,%timeout)
+{
+	if(getSimTime() > %timeout)
+	{
+		%holdemgame.Command("Fold (Ran out of time)");
+		return;
+	}
+
+	if(getSimTime() > (%timeout - 5000) && getSimTime() > %client.Casino_TickTimeout)
+	{
+		%client.playSound("Block_SMoveBrick_Sound");
+		%client.Casino_TickTimeout = getSimTime() + 1000;
+	}
+
+
+	%holdemgame.takeTooLongSchedule = schedule(500,%client,"HoldemGame_TakeTooLong",%holdemgame,%client,%timeout);
 }
 
 function HoldemGame::promptInput(%obj)
@@ -169,12 +196,13 @@ function HoldemGame::promptInput(%obj)
 	if(%obj.automated)
 	{
 		%timelimit = "You have \c220 seconds\c5.";
-		%obj.takeTooLongSchedule = %obj.schedule(20000,"Command","Fold (Ran out of time)");
+		cancel(%obj.takeTooLongSchedule);
+		HoldemGame_TakeTooLong(%obj,%c,getSimTime() + 20000);
 	}
 	
-	%c.chatMessage("\c5Take your turn, you can\c2" SPC stringList(%o," ","\c5,\c2","\c5or\c2") @"\c5." SPC %timelimit);
-	%obj.messageAll("\c6It is\c3" SPC %c.getPlayerName() @ "\c6's turn.",%c);
-	%c.playSound("Beep_Popup_Sound");
+	%c.chatMessage("\c2(Casino) \c5Take your turn, you can\c2" SPC stringList(%o," ","\c5,\c2","\c5or\c2") @"\c5." SPC %timelimit);
+	%obj.messageAll("\c2(Casino) \c6It is\c3" SPC %c.getPlayerName() @ "\c6's turn.",%c);
+	%c.playSound("Block_LoadStart_Sound");
 }
 
 function HoldemGame::start(%obj,%blind)
@@ -202,13 +230,12 @@ function HoldemGame::start(%obj,%blind)
 		}
 		%player = %seats.next(%player + 1);
 	}
-	
 
 	if(%obj.game.nextHand(%blind))
 	{
 		//message all the game has started and place blinds + deal animation
 		%obj.currInput = 127934689761234; // a value that hopefully isn't used by anything to kill any restart on join
-		%obj.messageAll("\c6A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
+		%obj.messageAll("\c2(Casino) \c6A hand has started. When it is your turn say one of your availble commands in chat. To peek click on your cards.");
 		%game = %obj.game;
 		%seats = %game.seats;
 		%table = %obj.table;
@@ -239,10 +266,11 @@ function HoldemGame::start(%obj,%blind)
 			%player = %seats.next(%player + 1);
 		}
 		%deal = trim(%deal1) TAB trim(%deal2);
+		%obj.dealing = true;
 		%obj.schedule(1000,"deal",%deal);
 		return true;
 	}
-	%obj.messageAll("\c5There are not enough players to start a hand.");
+	%obj.messageAll("\c2(Casino) \c5There are not enough players to start a hand.");
 	return false;
 }
 
@@ -269,6 +297,7 @@ function HoldemGame::deal(%obj,%list)
 {	
 	if(%list $= "")
 	{
+		%obj.dealing = false;
 		%obj.promptInput();
 		return"";
 	}
@@ -317,6 +346,21 @@ function HoldemGame::messageAll(%obj,%s,%except)
 	}
 }
 
+function HoldemGame::soundAll(%obj,%s,%except)
+{
+	%group = %obj.listClient;
+	%count = %group.getCount();
+	for(%i = 0; %i < %count; %i++)
+	{
+		%curr = %group.getObject(%i);
+		if(%curr == %except)
+		{
+			continue;
+		}
+		%curr.playSound(%s);
+	}
+}
+
 function HoldemGame::next(%obj)
 {
 	cancel(%obj.takeTooLongSchedule);
@@ -341,11 +385,11 @@ function HoldemGame::next(%obj)
 				%obj.game.dealCommunity();
 			}
 			%obj.updateCommunity();
-			%obj.game.nextRound();
+			%game.nextRound();
 		}
 		else
 		{
-			%obj.game.nextTurn();
+			%game.nextTurn();
 		}
 		%round = %game.round();
 	}
@@ -432,19 +476,6 @@ function HoldemGame::pots(%obj,%showdown)
 
 	if(getFieldCount(%showDown) == 0)
 	{
-		%count = %seats.count();
-		%player = %seats.next(0);
-		for(%i = 0; %i < %count; %i++)
-		{
-			if(%game.playerStack(%player) == 0)
-			{
-				%c = %obj.seatClient[%player];
-				%c.chatMessage("\c5You ran out of chips!");
-				%obj.remove(%c);	
-			}
-			%player = %seats.next(%player + 1);
-		}
-
 		if(%obj.automated && %obj.game.seats.count() >= 2)
 		{
 			%obj.messageAll("\c6The game will restart in \c210 seconds...");
@@ -519,22 +550,25 @@ function HoldemGame::Command(%obj,%s)
 			{
 				%val = %b + 0;
 			}
-
-			if(!%obj.game.canRaise() || %val <= 0)
+			
+			%curr = %obj.game.curr();
+			if(!%obj.game.canRaise() || %val <= 0 || %val > %obj.game.playerStack(%curr))
 			{
-				%obj.seatClient[%obj.game.curr()].chatMessage("\c5You cannot raise to" SPC %val SPC "chips");
+				%obj.seatClient[%curr].chatMessage("\c2(Casino) \c5You cannot raise by" SPC %val SPC "chips");
 				%handled = false;
 			}
 			else
 			{
 				%obj.game.raise(%val);
-				serverPlay3d(Casino_GetRandomSound("Chip",3),%obj.table.playerStake[%obj.game.curr()]);
+				serverPlay3d(Casino_GetRandomSound("Chip",3),%obj.table.playerStake[%curr]);
 				%handled = true;
 			}
 		}
 
 		if(%handled)
 		{
+			%obj.soundAll("Beep_Key_Sound",%obj.currInput);
+			%obj.currInput.playSound("Block_LoadEnd_Sound");
 			%obj.CasinoMessage(%obj.currInput,%s);
 			%obj.next();
 			break;
@@ -641,8 +675,9 @@ package HoldemGame
 	function Player::ActivateStuff(%p)
 	{
 		%c = %p.client;
-		if(isObject(%c.casinoGame))
+		if(isObject(%c.casinoGame) && !%obj.dealing && %c.lastCasinoPickupTime + 500 < getSimTime())
 		{
+			%c.lastCasinoPickupTime = getSimTime();
 			%c.casinoGame.pickup(%c,%p);
 		}
 

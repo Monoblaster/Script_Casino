@@ -29,7 +29,6 @@ function Holdem::setPlayer(%obj,%n,%in,%stack)
 
 	if(!%in && %obj.playerFolded[%n])
 	{
-		%obj.playerFolded[%n] = false;
 		%obj.foldedCount--;
 	}
 
@@ -289,9 +288,18 @@ function Holdem::check(%obj)
 
 function Holdem::allIn(%obj)
 {
+	%curr = %obj.seats.curr();
 	if(%obj.newPot)
 	{
-		%obj.pot[%obj.potCount++] = 0;
+		%newPotValue = 0;
+		%possiblestake = %obj.playerStack[%curr] + %obj.playerStake[%curr];
+		if(%possiblestake < %obj.minStake())
+		{
+			%newPotValue = %obj.pot[%obj.potCount - 1] - (%obj.minStake - %possiblestake);
+			%obj.pot[%obj.potCount - 1] = %obj.minStake - %possiblestake; // set old pot to this new value so new bets don't effect it
+		}
+		%obj.pot[%obj.potCount++ - 1] = %newPotValue;
+		
 		%obj.newPot = false;
 	}
 
@@ -332,7 +340,7 @@ function Holdem::bet(%obj,%n)
 {
 	if(%obj.newPot)
 	{
-		%obj.pot[%obj.potCount++] = 0;
+		%obj.pot[%obj.potCount++ - 1] = 0;
 		%obj.newPot = false;
 	}
 	%obj.lastBet = %n;
@@ -399,14 +407,12 @@ function Holdem_Eval(%hand)
 	%count = getFieldCount(%rankHistogram);
 	%sameRanks = "";
 	%rankComparison = "";
-	for(%i = 0; %c < %count; %i++)
+	for(%i = 0; %i < %count; %i++)
 	{
 		%words = getField(%rankHistogram,%i);
-		%c += getWord(%words,0);
 		%sameRanks = %sameRanks @ getWord(%words,0);
 		%rankComparison = %rankComparison @ Holdem_RankA(getWord(%words,1));
 	}
-
 	%bestSuit = getWord(getField(%suitHistogram,0),1); 
 	%sortedHand = sortWords(%hand,"Poker_Suit(%v1) == " @ %bestSuit @ " && Poker_Suit(%v2) == " @ %bestSuit @ "&& Poker_Rank(%v1) > Poker_Rank(%v2) || Poker_Suit(%v1) == " @ %bestSuit @ " &&  Poker_Suit(%v2) != " @ %bestSuit);
 	for(%i = 0; %i < %cardCount; %i++)

@@ -128,5 +128,5 @@ function Poker_ShortName(%n)
 
 function Poker_Num(%s)
 {
-	echo($Poker::Card[getWord(%s,0)] + mLog($Poker::Suit[getWord(%s,2)])/mLog(2) * 13);
+	return $Poker::Card[getWord(%s,0)] + mLog($Poker::Suit[getWord(%s,2)])/mLog(2) * 13;
 }
