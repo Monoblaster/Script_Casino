@@ -56,6 +56,7 @@ $Casino::IncomeAmount = 10;
 $Persistence::MatchName["CasinoChips"] = true;
 $Persistence::MatchName["CasinoLastIncomeMinute"] = true;
 $Persistence::MatchName["CasinoLastIncomeSecond"] = true;
+$Persistence::MatchName["CasinoLastIncomeYear"] = true;
 
 registerOutputEvent("fxDTSBrick", "CasinoIncome", "", true);
 registerInputEvent("fxDTSBrick", "onCasinoIncome", "Self fxDTSBrick" TAB "Player Player" TAB "Client GameConnection" TAB "MiniGame MiniGame");
@@ -94,6 +95,11 @@ function fxDTSBrick::onCasinoIncome(%obj, %player, %client)
 function fxDTSBrick::CasinoIncome(%brick,%client)
 { 
    %remainingMinutes = %client.CasinoLastIncomeMinute + $Casino::IncomeTime - getCurrentMinuteOfYear() +  (%client.CasinoLastIncomeSecond - Casino_GetCurrentSecondOfTheMinute()) / 60;
+   if(getCurrentYear() > %client.CasinoLastIncomeYear)
+   {
+      %remainingMinutes -= 525600;
+   }
+
    if(%remainingMinutes > 9.92) // cooldown for a couple seconds after claiming to stop you form missing the claim message
    {
       return;
@@ -113,6 +119,7 @@ function fxDTSBrick::CasinoIncome(%brick,%client)
 
    %client.CasinoLastIncomeMinute = getCurrentMinuteOfYear();
    %client.CasinoLastIncomeSecond = Casino_GetCurrentSecondOfTheMinute();
+   %client.CasinoLastIncomeYear = getCurrentYear();
    %client.CasinoChips += $Casino::IncomeAmount;
 
    %brick.onCasinoIncome(%obj, %client.player, %client);
